@@ -14,7 +14,7 @@ screen-flash mode (honest fallback, not a crash).
 
 ## 1. What ships
 
-The app is **12 files, no build step, no dependencies**. Deploy the directory
+The app is **15 files, no build step, no dependencies**. Deploy the directory
 as-is — nothing to compile, install, or configure. (Inventory verified against
 the actual repo tree, not guessed:)
 
@@ -31,6 +31,9 @@ js/conductor.js     │
 js/hash.js          │
 js/states.js        │
 js/copy.js          ┘
+favicon.svg         ┐
+favicon.ico         │ the favicon (punched-tape M mark) in three formats
+apple-touch-icon.png┘
 ```
 
 - All asset references are **relative** (`css/main.css`, `js/app.js`), so the
@@ -143,7 +146,7 @@ publish more of the project.
 **Caveats:** a direct-upload project can't be switched to Git integration
 later (irrelevant for a one-shot deploy); to update, create a new deployment
 the same way (deployments are atomic); drag-and-drop accepts up to 1,000 files
-/ 25 MiB each — this bundle is 12 small files.
+/ 25 MiB each — this bundle is 15 small files.
 
 ### Option D — Cloudflare Workers, Git-connected (push-to-deploy)
 

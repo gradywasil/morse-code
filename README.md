@@ -64,6 +64,7 @@ npm test
 
 ```
 index.html      the app — open it in a browser
+favicon.*       the punched-tape favicon (svg + ico + apple-touch)
 css/main.css    the Register's visual world
 js/             10 ES modules: morse, schedule, torch, screen, audio,
                 conductor, states, hash, copy, app

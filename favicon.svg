@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- The Register favicon: paper tape punching M (— —) under the plate rim -->
+  <defs>
+    <clipPath id="plate">
+      <rect x="0" y="0" width="64" height="64" rx="14"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#plate)">
+    <!-- ground plate -->
+    <rect x="0" y="0" width="64" height="64" fill="#171008"/>
+    <!-- paper tape, full-bleed across the plate -->
+    <rect x="0" y="20" width="64" height="24" fill="#e2d3a8"/>
+    <!-- sprocket feed row along the tape's top edge -->
+    <circle cx="9"  cy="24.5" r="1.8" fill="#171008"/>
+    <circle cx="18" cy="24.5" r="1.8" fill="#171008"/>
+    <circle cx="27" cy="24.5" r="1.8" fill="#171008"/>
+    <circle cx="36" cy="24.5" r="1.8" fill="#171008"/>
+    <circle cx="45" cy="24.5" r="1.8" fill="#171008"/>
+    <circle cx="54" cy="24.5" r="1.8" fill="#171008"/>
+    <!-- punched dashes: M = — — -->
+    <rect x="9"  y="30.5" width="18" height="7" rx="3.5" fill="#171008"/>
+    <rect x="37" y="30.5" width="18" height="7" rx="3.5" fill="#171008"/>
+    <!-- plate rim, drawn over the tape: the tape passes under the bezel -->
+    <rect x="1.5" y="1.5" width="61" height="61" rx="12.5" fill="none" stroke="#2b2013" stroke-width="3"/>
+    <!-- the lamp jewel -->
+    <circle cx="50.5" cy="10.5" r="3.2" fill="#ffb454"/>
+  </g>
+</svg>
