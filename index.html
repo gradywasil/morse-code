@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171008">
+  <title>THE REGISTER — A MACHINE FOR SPEAKING MORSE BY LIGHT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Stencil+One&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body data-state="idle">
+  <!--
+  THE REGISTER — direction contract (code-led; world locked by user 2026-08-28)
+
+  THESIS: The tape is the translation and the read-head is the broadcast —
+  typing punches paper, the traversing head reads holes as light. Refuses the
+  centered card, textarea, and blue button of the category default.
+
+  OWN-WORLD: Dark warm instrument ground; a full-bleed paper-tape band with
+  punch-hole dots and dashes, sprocket feed, and printed letters; stencil
+  machine-plate legends; one amber lamp accent for live states. Saira Stencil
+  One legends, Barlow plates, Spline Sans Mono tape data.
+
+  STORY: A visitor types, watches punches appear letter by letter, presses
+  BROADCAST, and holds the phone up as its lamp, screen, and tone speak the
+  tape in International Morse.
+
+  FIRST VIEWPORT: Portrait phone: compact nameplate; MESSAGE composer; then
+  the tape band dominating edge to edge, read-head at center, machine status
+  printed beneath; BROADCAST key at thumb height; named speed steps and the
+  share row below.
+
+  FORM: Punched-tape telegraph register — position 4 of 7 grounded candidates;
+  seed key 53cae9af.
+
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, DESIGN.md, and every shipping raster carrying
+  its provenance.
+  -->
+
+  <header class="plate nameplate">
+    <p class="plate-rule" aria-hidden="true"></p>
+    <h1 class="name-title">THE REGISTER</h1>
+    <p class="name-sub">A MACHINE FOR SPEAKING MORSE BY LIGHT</p>
+  </header>
+
+  <main class="deck">
+
+    <!-- The composer -->
+    <section class="bay" id="composer" aria-label="MESSAGE">
+      <label class="legend" for="message">MESSAGE</label>
+      <input id="message" class="message-input" type="text" inputmode="text"
+             autocomplete="off" spellcheck="false" value="HELLO DARK ROOM"
+             placeholder="TYPE THE MESSAGE TO SEND">
+      <p class="tape-flag" id="unknown-flags" hidden>NO MORSE SIGN FOR: <span class="flag-chars"></span></p>
+      <p class="tape-empty" id="empty-note" hidden>EMPTY TAPE. TYPE A MESSAGE TO BROADCAST.</p>
+      <p class="flag-note" id="flag-note" hidden>Characters without a Morse sign stay on the tape, unspoken.</p>
+    </section>
+
+    <!-- The tape station: the band, the read-head, the printed state -->
+    <section class="bay bay-station" id="station">
+      <div class="tape-window" aria-hidden="true">
+        <div class="tape-inset">
+          <div class="tape-head">
+            <span class="head-cap"></span>
+            <span class="head-rail head-rail-l"></span>
+            <span class="head-rail head-rail-r"></span>
+            <span class="head-slot"></span>
+            <span class="head-lamp"></span>
+          </div>
+          <ol class="tape-strip">
+            <li class="tg" data-g="1" style="left:44px;width:86px"><span class="tg-char">H</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="2" style="left:156px;width:14px"><span class="tg-char">E</span><span class="tg-marks"><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="3" style="left:196px;width:114px"><span class="tg-char">L</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="4" style="left:336px;width:114px"><span class="tg-char">L</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="5" style="left:476px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg" data-g="6" style="left:680px;width:90px"><span class="tg-char">D</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="7" style="left:796px;width:66px"><span class="tg-char">A</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg" data-g="8" style="left:888px;width:90px"><span class="tg-char">R</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="9" style="left:1004px;width:118px"><span class="tg-char">K</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg" data-g="10" style="left:1180px;width:90px"><span class="tg-char">R</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg" data-g="11" style="left:1296px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg" data-g="12" style="left:1468px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg" data-g="13" style="left:1640px;width:94px"><span class="tg-char">M</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="station-status" role="status" aria-live="polite">
+        <span class="station-lamp" aria-hidden="true"></span>
+        <p class="status-line" data-state-line="idle"><span class="status-legend">IDLE</span> <span class="status-copy">TYPE A MESSAGE. THE TAPE PUNCHES AS YOU GO.</span></p>
+        <p class="status-line" data-state-line="preflight"><span class="status-legend">PREFLIGHT</span> <span class="status-copy">THE GATE BEFORE THE FIRST BROADCAST.</span></p>
+        <p class="status-line" data-state-line="arming"><span class="status-legend">ARMING</span> <span class="status-copy">TESTING THE LAMP. IT MAY BLINK ONCE.</span></p>
+        <p class="status-line" data-state-line="awaiting-permission"><span class="status-legend">AWAITING PERMISSION</span> <span class="status-copy">THE BROWSER HAS THE CAMERA QUESTION. ANSWER IT.</span></p>
+        <p class="status-line" data-state-line="permission-denied"><span class="status-legend">PERMISSION DENIED</span> <span class="status-copy">CAMERA REFUSED. THE TORCH CANNOT LIGHT WITHOUT IT.</span></p>
+        <p class="status-line" data-state-line="unsupported"><span class="status-legend">NO TORCH</span> <span class="status-copy">NO LAMP TO DRIVE. THE SCREEN CARRIES THE SIGNAL.</span></p>
+        <p class="status-line" data-state-line="torch-ready"><span class="status-legend">TORCH READY</span> <span class="status-copy">LAMP ARMED. STANDING BY FOR THE WORD.</span></p>
+        <p class="status-line" data-state-line="screen-mode"><span class="status-legend">SCREEN READY</span> <span class="status-copy">SCREEN ARMED. HOLD IT UP — IT IS THE LAMP.</span></p>
+        <p class="status-line" data-state-line="ready"><span class="status-legend">READY</span> <span class="status-copy">COMMITTED. STANDBY, CAUTION, THEN GO.</span></p>
+        <p class="status-line" data-state-line="broadcasting"><span class="status-legend">SENDING</span> <span class="status-copy">TORCH LIGHT SPEAKS THE TAPE.</span></p>
+        <p class="status-line" data-state-line="broadcasting-on-screen"><span class="status-legend">SENDING</span> <span class="status-copy">SCREEN LIGHT SPEAKS THE TAPE.</span></p>
+        <p class="status-line" data-state-line="paused"><span class="status-legend">PAUSED</span> <span class="status-copy">HELD AT POSITION. THE TAPE WAITS.</span></p>
+        <p class="status-line" data-state-line="paused-on-screen"><span class="status-legend">PAUSED</span> <span class="status-copy">HELD AT POSITION. SCREEN HOLDS THE LIGHT.</span></p>
+        <p class="status-line" data-state-line="done"><span class="status-legend">DONE</span> <span class="status-copy">THE RUN IS OVER. THE TAPE KEEPS THE MESSAGE.</span></p>
+        <p class="status-line" data-state-line="error"><span class="status-legend">FAULT</span> <span class="status-copy">A FAULT STOPPED THE RUN. THE MESSAGE SURVIVES.</span></p>
+      <!-- The station announces STATES (a line becoming visible under the
+           head, read atomically with the current progress position), never
+           a per-mark ledger: each progress line rewrites its text every
+           mark (~2 Hz at LEARNER, 5 Hz at BRISK), so riding the container's
+           polite/atomic live region would queue a full-station announcement
+           per mark — SR chatter that buries the state changes (T-refine-2).
+           aria-live="off" scopes the churn out of the announcements while
+           the visible line keeps updating every mark. -->
+      <p class="status-progress" data-state-progress="broadcasting" aria-live="off">MARK 7 OF 38</p>
+      <p class="status-progress" data-state-progress="broadcasting-on-screen" aria-live="off">MARK 9 OF 38</p>
+      <p class="status-progress" data-state-progress="paused" aria-live="off">MARK 8 OF 38</p>
+      <p class="status-progress" data-state-progress="paused-on-screen" aria-live="off">MARK 8 OF 38</p>
+      <p class="status-progress" data-state-progress="error" aria-live="off">MARK 6 OF 38</p>
+      </div>
+      <p class="takeover-note" data-state-note="broadcasting-on-screen">LIGHT SOURCE LOST — CONTINUING ON SCREEN. POSITION KEPT. THE MESSAGE LOSES NOTHING.</p>
+    </section>
+
+    <!-- Standby / caution / GO choreography zones -->
+    <section class="bay" id="corridor" aria-label="STANDBY, CAUTION, THEN GO">
+      <div class="zone" data-zone="standby">
+        <span class="zone-lamp" aria-hidden="true"></span>
+        <p class="zone-legend">STANDBY</p>
+        <p class="zone-line">INSTRUMENT ARMED. MESSAGE SET.</p>
+      </div>
+      <div class="zone" data-zone="caution">
+        <span class="zone-lamp" aria-hidden="true"></span>
+        <p class="zone-legend">CAUTION</p>
+        <p class="zone-line">THE LIGHT IS ABOUT TO SPEAK.</p>
+      </div>
+      <div class="zone" data-zone="go">
+        <span class="zone-lamp" aria-hidden="true"></span>
+        <p class="zone-legend">GO</p>
+        <p class="zone-line">SENDING NOW.</p>
+      </div>
+    </section>
+
+    <!-- First-run gate: the photosensitivity hazard plate -->
+    <aside class="bay gate-plate" id="hazard" aria-label="CAUTION — FLASHING LIGHT">
+      <h2 class="gate-title">CAUTION — FLASHING LIGHT</h2>
+      <div class="gate-grid">
+        <svg class="hazard-pict" role="img" aria-label="Warning pictogram: a lamp emitting rapid flashes." viewBox="0 0 72 72" focusable="false">
+          <path d="M36 7 66 62 H6 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/>
+          <circle cx="36" cy="42" r="6.5" fill="none" stroke="currentColor" stroke-width="4"/>
+          <path d="M36 31.5v-6M25 36l-5.5-3M47 36l5.5-3M27.5 46.5 23 50M44.5 46.5 49 50" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div class="gate-copy">
+          <p class="gate-imperative">DO NOT WATCH IF FLASHING LIGHT HAS EVER TRIGGERED A SEIZURE.</p>
+          <p class="gate-advisory">This instrument speaks by flashing light. Anyone photosensitive should not watch the lamp or the screen.</p>
+        </div>
+      </div>
+      <ul class="gate-facts">
+        <li>Speed steps: LEARNER 5, STANDARD 8, BRISK 12 words per minute.</li>
+        <li>Repeated dots flash 2.1, 3.3 and 5.0 times per second across those steps.</li>
+        <li>The safety line is 3 flashes per second.</li>
+        <li>The default LEARNER step stays below the line.</li>
+      </ul>
+      <p class="gate-first">FIRST RUN. READ THE CAUTION PLATE BEFORE THE LIGHT SPEAKS.</p>
+      <p class="gate-returning" hidden>CAUTION PLATE ON FILE. RE-ARM WHEN READY.</p>
+      <div class="keys">
+        <button class="key key-primary" type="button" data-action="ack">ACKNOWLEDGE — PROCEED</button>
+        <button class="key" type="button" data-action="decline">NOT NOW</button>
+      </div>
+    </aside>
+
+    <!-- Why the camera prompt (shown before the browser prompt) -->
+    <aside class="bay" id="why-camera" aria-label="WHY THE CAMERA PROMPT">
+      <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
+      <ul class="why-lines">
+        <li>Browsers expose the torch only through a live camera stream.</li>
+        <li>The prompt is the only door to the lamp.</li>
+        <li>No video is recorded. No video is sent anywhere.</li>
+        <li>The camera closes the moment the broadcast ends.</li>
+      </ul>
+      <div class="keys">
+        <button class="key key-primary" type="button" data-action="continue-prompt">CONTINUE TO THE PROMPT</button>
+      </div>
+    </aside>
+
+    <!-- Permission denied: the screen offer, never a dead end -->
+    <aside class="bay" id="denied" aria-label="PERMISSION DENIED">
+      <h2 class="gate-title">BROADCAST BY SCREEN LIGHT</h2>
+      <p class="denied-line">THE SCREEN NEEDS NO PERMISSION AND SPEAKS THE SAME MORSE.</p>
+      <p class="denied-hint">Refused by choice? Regrant camera access in the browser site settings, then retry.</p>
+      <div class="keys">
+        <button class="key key-primary" type="button" data-action="accept-screen">BROADCAST BY SCREEN LIGHT</button>
+        <button class="key" type="button" data-action="retry-arm">RETRY THE TORCH</button>
+      </div>
+    </aside>
+
+    <!-- No torch: the screen framed positively -->
+    <aside class="bay" id="screen-note" aria-label="THE SCREEN IS THE LAMP">
+      <p class="screen-line">THE SCREEN IS THE LAMP. HOLD IT UP FACING THE ROOM.</p>
+    </aside>
+
+    <!-- Transport keys -->
+    <section class="bay" id="transport">
+      <div class="keys keys-cold">
+        <button class="key key-primary key-broadcast" type="button" data-action="broadcast">BROADCAST</button>
+        <button class="key" type="button" data-action="tone">TONE</button>
+      </div>
+      <div class="keys keys-cancel">
+        <button class="key" type="button" data-action="cancel">CANCEL</button>
+      </div>
+      <div class="keys keys-live">
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+        <button class="key" type="button" data-action="pause">PAUSE</button>
+        <button class="key" type="button" data-action="switch-screen">SWITCH TO SCREEN</button>
+        <button class="key" type="button" data-action="tone">TONE</button>
+      </div>
+      <p class="switch-hint">LAMP NOT FLASHING? THE SCREEN CAN TAKE OVER MID-MESSAGE.</p>
+      <div class="keys keys-live-screen">
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+        <button class="key" type="button" data-action="pause">PAUSE</button>
+        <button class="key" type="button" data-action="tone">TONE</button>
+      </div>
+      <div class="keys keys-paused">
+        <button class="key key-primary" type="button" data-action="resume">RESUME</button>
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+      </div>
+      <div class="keys keys-done">
+        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
+      </div>
+      <p class="done-offer">REPLAY IT, OR SHARE THE LINK.</p>
+      <div class="keys keys-error">
+        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
+        <button class="key" type="button" data-action="reset">RESET</button>
+      </div>
+      <p class="error-recover">THE MESSAGE SURVIVES. REPLAY, RETRY, OR RESET.</p>
+    </section>
+
+    <!-- Named speed steps -->
+    <section class="bay" id="speed">
+      <fieldset class="steps-field">
+        <legend class="legend">SPEED</legend>
+        <div class="steps">
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-learner" checked value="LEARNER">
+            <label class="key step-key" for="step-learner"><span class="step-name">LEARNER</span><span class="step-wpm">5</span></label>
+            <p class="step-detail">5 WPM. Slow, even punch. Flashes stay under 3 per second. The default.</p>
+          </div>
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-standard" value="STANDARD">
+            <label class="key step-key" for="step-standard"><span class="step-name">STANDARD</span><span class="step-wpm">8</span></label>
+            <p class="step-detail">8 WPM. Trained pace. Repeated dots reach 3.3 per second.</p>
+          </div>
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-brisk" value="BRISK">
+            <label class="key step-key" for="step-brisk"><span class="step-name">BRISK</span><span class="step-wpm">12</span></label>
+            <p class="step-detail">12 WPM. Fast punch for practiced eyes.</p>
+            <p class="step-caution">RAPID FLASH: REPEATED DOTS REACH 5.0 PER SECOND — ABOVE THE 3-HERTZ SAFETY LINE.</p>
+          </div>
+        </div>
+        <p class="speed-cap">CEILING 12 WPM. NO FASTER STEP EXISTS.</p>
+      </fieldset>
+    </section>
+
+    <!-- Share row -->
+    <section class="bay" id="share" aria-label="SHARE">
+      <div class="share-row">
+        <button class="key" type="button" data-action="copy-link">COPY LINK</button>
+        <p class="share-carries">The link holds the message and its speed. No server, no record.</p>
+      </div>
+      <p class="share-outcome" data-outcome="copied" hidden>LINK COPIED TO THE CLIPBOARD</p>
+      <p class="share-outcome" data-outcome="failed" hidden>COPY REFUSED. COPY THE ADDRESS BAR BY HAND.</p>
+      <p class="shared-loaded" hidden>MESSAGE AND SPEED LOADED FROM THE LINK.</p>
+    </section>
+
+  </main>
+
+  <footer class="plate footplate">
+    <p class="foot-line">ITU INTERNATIONAL MORSE. LAMP, SCREEN, AND TONE.</p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

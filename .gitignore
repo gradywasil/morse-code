@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Impeccable design-tooling evidence (internal captures, critique snapshots, mocks)
+.impeccable/
+
+# Node
+node_modules/

@@ -1,0 +1,1209 @@
+/* css/main.css — THE REGISTER
+   World locked in docs/ultron/design-brief.md: a punched-tape telegraph
+   register — dark warm instrument ground, a paper tape band crossing the
+   viewport with punch-hole dots/dashes, stencil machine-plate legends,
+   one amber lamp accent for live states. Precision instrumentation, not
+   steampunk: hairlines, not brass cogs.
+
+   All user-facing copy lives in js/copy.js (U1) and is rendered verbatim in
+   index.html; this file never speaks. State snapshots are driven entirely by
+   body[data-state="…"] (F8 states.js vocabulary); js/app.js (I2) sets that
+   attribute. Motion (I3) is one authored grammar — the MOTION GRAMMAR
+   section — and a capability layer (Arcade's law): every glow and animation
+   flattens to static with zero information loss under prefers-reduced-motion
+   and under html.cap-low (Save-Data, mirrored by js/app.js). */
+
+/* ------------------------------------------------------------------ tokens */
+:root {
+  --ground: #171008;          /* dark warm instrument ground */
+  --ground-deep: #0f0a05;     /* inset slots (composer, tape holes) */
+  --panel-hi: #241a10;
+  --panel-lo: #1e150c;
+  --metal-hi: #3f2f1d;
+  --metal-lo: #2c2013;
+  --hairline: rgba(240, 214, 166, 0.14);
+  --hairline-strong: rgba(240, 214, 166, 0.26);
+
+  --cream: #eee0c2;           /* primary text on ground  (~14:1) */
+  --cream-dim: #b3a17c;       /* secondary text on ground (~7:1) */
+
+  --lamp: #ffb454;            /* the ONE lamp accent */
+  --lamp-lit: #ffc879;
+  --lamp-dim: #8a6c3c;        /* armed / held */
+  --lamp-off: #3a2b19;
+  --lamp-glow: rgba(255, 176, 84, 0.4);
+
+  --paper: #e2d3a8;           /* the tape band */
+  --paper-hi: #e6d7b0;
+  --paper-lo: #cbb98b;
+  --paper-edge: #453317;
+  --ink: #2b2013;             /* printed characters on paper */
+  --ink-sent: #645637;        /* groups already spoken (Q2: 4.61–4.79:1 at
+                                 the actual letter-row gradient — glyphs
+                                 sit 17–29% into the band, worst row
+                                 #dfcea4 → 4.61 ≥4.5:1; still the lightest
+                                 tape ink — spoken stays de-emphasized) */
+  --ink-current: #7a4a0c;     /* the group under the head (Q2: 4.80–4.99:1
+                                 at the same letter rows, above the 4.5:1
+                                 line; amber-brown hue kept, darker than
+                                 --ink-sent so the live > spoken
+                                 hierarchy reads as before) */
+
+  --font-legend: "Saira Stencil One", "Barlow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* capability layer: glows flatten under prefers-reduced-motion */
+  --lamp-halo: 0 0 14px var(--lamp-glow), 0 0 4px var(--lamp-glow);
+  --zone-halo: 0 0 12px rgba(255, 176, 84, 0.25);
+  --punch-glow: 0 0 12px rgba(255, 180, 84, 0.45);
+
+  /* Motion grammar (I3): one family of mechanical strokes — quick
+     departures, firm settles; nothing bounces, floats, or loops. Every
+     moving part reads one of these two curves and stays ≤200ms; the one
+     exception is the tape traverse, whose TARGETS are progress-driven
+     (the conductor's per-letter events) while its easing stays the
+     register's. --drive takes up slack then seats (feed mechanisms);
+     --snap is the near-instant settle of a part hitting its stop. */
+  --drive: cubic-bezier(0.32, 0, 0.18, 1);
+  --snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --band-h: 152px;            /* tape band height (phone-first) */
+  --char-top: 27px;
+  --marks-top: 78px;
+
+  /* per-state snapshot levers (see the state block at the end) */
+  --strip-shift: 87px;        /* which tape center sits under the head */
+  --lamp-bg: var(--lamp-off);
+  --lamp-halo-on: none;
+  --status-legend-ink: var(--cream-dim);
+}
+
+/* ------------------------------------------------------------------- base */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #1d150b 0%, var(--ground) 55%, #120c06 100%);
+  color: var(--cream);
+  font: 400 16px/1.5 var(--font-body);
+  min-height: 100vh;   /* fallback; dvh below tracks the mobile chrome */
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+h1, h2, p, ul, ol, dl, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; }
+
+::selection { background: rgba(255, 180, 84, 0.35); color: #fff6e4; }
+
+/* the browser's own scrollbar — the last surface the machine did not draw
+   (I5's carried polish item): a paper-family thumb riding the warm ground,
+   pill-capped like a punch hole. The viewport is the page's only scroller
+   (the tape band clips — overflow hidden — it never scrolls), so this
+   themes exactly the bar a desktop shows; styling never forces a bar where
+   none exists. Firefox via the standard properties; WebKit (and legacy
+   Chromium) via the pseudo-elements. */
+html {
+  scrollbar-color: var(--paper-lo) var(--ground);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--paper-lo);
+  border-radius: 9px;        /* the punch-hole pill, on end */
+}
+::-webkit-scrollbar-thumb:hover { background: var(--paper); }
+
+/* the lamp outline (I1's focus grammar): the outline follows each
+   element's own corners — the element's radius is never mutated. */
+:focus-visible {
+  outline: 2px solid var(--lamp);
+  outline-offset: 2px;
+}
+
+[hidden] { display: none !important; }
+
+/* ------------------------------------------------------------- nameplate */
+.nameplate {
+  text-align: center;
+  padding: 22px 16px 16px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.name-title {
+  font: 400 clamp(1.55rem, 7vw, 2.3rem)/1.05 var(--font-legend);
+  letter-spacing: 0.1em;
+  color: var(--cream);
+  text-wrap: balance;
+}
+
+.name-sub {
+  margin-top: 7px;
+  font: 500 11px/1.4 var(--font-body);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+}
+
+.plate-rule {
+  width: min(1160px, 92vw);
+  height: 1px;
+  margin: 0 auto 14px;
+  background: linear-gradient(90deg, transparent, var(--hairline-strong) 18%, var(--hairline-strong) 82%, transparent);
+  position: relative;
+}
+.plate-rule::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 5px;
+  height: 5px;
+  transform: translateX(-50%) rotate(45deg);
+  background: var(--lamp-dim);
+}
+
+/* ------------------------------------------------------------------ deck */
+.deck {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 16px 16px 30px;
+  display: grid;
+  gap: 14px;
+}
+
+/* machine bays: raised plates */
+.bay {
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 235, 200, 0.05), 0 8px 22px rgba(0, 0, 0, 0.32);
+}
+
+.legend {
+  display: block;
+  font: 400 13px/1 var(--font-legend);
+  letter-spacing: 0.16em;
+  color: var(--cream-dim);
+}
+
+/* -------------------------------------------------------------- composer */
+#composer { padding-bottom: 14px; }
+
+#composer .legend { margin-bottom: 10px; }
+
+.message-input {
+  width: 100%;
+  font: 500 16px/1.45 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--cream);
+  background: var(--ground-deep);
+  border: 1px solid #43301d;
+  border-radius: 8px;
+  padding: 14px;
+  caret-color: var(--lamp);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.message-input:hover { border-color: #55402a; }
+.message-input:focus { border-color: rgba(255, 180, 84, 0.55); outline: none; }
+.message-input:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+.message-input::placeholder { color: #97866a; letter-spacing: 0.06em; }
+/* the composer freezes once a run is committed (js/app.js disables it) */
+.message-input:disabled { opacity: 0.55; border-color: #3f2e1b; }
+
+.tape-flag,
+.tape-empty {
+  margin-top: 10px;
+  font: 600 12.5px/1.5 var(--font-body);
+  letter-spacing: 0.05em;
+  color: var(--lamp);
+}
+
+.flag-note {
+  margin-top: 4px;
+  font: 400 12.5px/1.5 var(--font-body);
+  color: var(--cream-dim);
+}
+
+/* ----------------------------------------------------------- the station */
+.bay-station {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* the paper band — full-bleed, crossing the viewport */
+.tape-window {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  height: var(--band-h);
+  overflow: hidden;
+  background: linear-gradient(180deg,
+    var(--paper-lo) 0%, #ddcca1 10%, var(--paper-hi) 42%,
+    var(--paper) 58%, #d9c89d 88%, var(--paper-lo) 100%);
+  border-top: 1px solid var(--paper-edge);
+  border-bottom: 1px solid var(--paper-edge);
+  box-shadow:
+    inset 0 3px 0 rgba(255, 250, 230, 0.45),
+    inset 0 -3px 0 rgba(66, 50, 26, 0.4),
+    inset 0 16px 20px -14px rgba(66, 50, 26, 0.55),
+    inset 0 -16px 20px -14px rgba(66, 50, 26, 0.45),
+    0 12px 28px rgba(0, 0, 0, 0.5);
+}
+
+/* sprocket feed holes — the tape's real feed edge */
+.tape-window::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 13px;
+  height: 9px;
+  background-image: radial-gradient(circle at 50% 50%,
+    var(--ground) 0 2.4px, rgba(43, 32, 19, 0.35) 2.4px 3.3px, transparent 3.5px);
+  background-size: 26px 9px;
+  background-repeat: repeat-x;
+  background-position: 13px center;
+}
+
+.tape-inset {
+  position: relative;
+  max-width: 1160px;
+  height: 100%;
+  margin: 0 auto;
+}
+
+/* the punched strip: position-authored groups (exact, no layout drift) */
+.tape-strip {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1778px;
+  transform: translateX(calc(0px - var(--strip-shift)));
+  /* the drive: the strip advances like paper on a sprocket feed — slack
+     taken up, then seated. I2's --strip-shift supplies progress-driven
+     targets; this easing is what makes it a driven tape, not a sliding
+     widget. (The traverse is the one motion exempt from the ≤200ms
+     stroke budget — its targets arrive on the broadcast's clock.) */
+  transition: transform 190ms var(--drive);
+  will-change: transform;
+}
+
+.tg { position: absolute; top: 0; bottom: 0; }
+
+.tg-char {
+  position: absolute;
+  top: var(--char-top);
+  left: -10px;
+  right: -10px;
+  text-align: center;
+  font: 600 15px/1 var(--font-mono);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.tg-marks {
+  position: absolute;
+  top: var(--marks-top);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;               /* the symbol gap */
+}
+
+/* punch holes: the ground shows through the paper */
+.tp {
+  height: 18px;
+  border-radius: 9px;
+  background: var(--ground);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 244, 214, 0.28);  /* paper thickness below the hole */
+}
+.tp-dot  { width: 14px; }
+.tp-dash { width: 42px; }
+
+/* groups already spoken */
+.tg-spoken .tg-char { color: var(--ink-sent); }
+
+/* the group under the read-head: the lamp lights its holes */
+.tg-live .tp {
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(255, 164, 60, 0.7),
+    var(--punch-glow);
+}
+.tg-live .tg-char { color: var(--ink-current); }
+
+/* unknown characters: kept on the tape, visibly unspoken */
+.tg-unknown .tg-char { color: var(--ink-current); }
+.tg-unknown .tg-marks { gap: 0; }
+.tg-unknown .tg-marks::before {
+  content: "";
+  width: 30px;
+  height: 5px;
+  align-self: center;
+  border-top: 2px dashed rgba(43, 32, 19, 0.55);
+}
+
+/* the read-head: fixed bridge at the inset's center — the tape moves, not it */
+.tape-head {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 68px;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.head-cap {
+  position: absolute;
+  top: 6px;
+  left: -7px;
+  right: -7px;
+  height: 13px;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+  border: 1px solid var(--hairline-strong);
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.head-rail {
+  position: absolute;
+  top: 19px;
+  bottom: 12px;
+  width: 4px;
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.head-rail-l { left: 1px; }
+.head-rail-r { right: 1px; }
+
+.head-slot {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 62px;
+  height: 46px;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 28%,
+      rgba(0, 0, 0, 0) 72%, rgba(0, 0, 0, 0.16));
+}
+
+.head-lamp {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lamp-bg);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: var(--lamp-halo-on);
+  /* light state changes ride the snap (idle → armed → live → held) */
+  transition: background-color 140ms var(--snap), box-shadow 140ms var(--snap);
+}
+
+/* machine-dialogue status, printed under the head */
+.station-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 13px 2px 0;
+}
+
+.station-lamp {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lamp-bg);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: var(--lamp-halo-on);
+  transition: background-color 140ms var(--snap), box-shadow 140ms var(--snap);
+}
+
+.status-line {
+  display: none;
+  align-items: baseline;
+  gap: 10px;
+  flex: 1 1 240px;
+}
+
+.status-legend {
+  font: 400 13px/1.2 var(--font-legend);
+  letter-spacing: 0.14em;
+  color: var(--status-legend-ink);
+  white-space: nowrap;
+  transition: color 140ms var(--snap);
+}
+
+.status-copy {
+  flex: 1 1 260px;   /* wraps to its own printed line when the bay is narrow */
+  font: 500 15px/1.45 var(--font-body);
+  color: var(--cream);
+}
+
+.status-progress {
+  display: none;
+  font: 500 13px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  color: var(--lamp);
+  white-space: nowrap;
+}
+
+.takeover-note {
+  display: none;
+  margin-top: 8px;
+  font: 600 13px/1.55 var(--font-body);
+  letter-spacing: 0.03em;
+  color: var(--lamp);
+}
+
+/* -------------------------------------------------------------- corridor */
+/* Stacked by default (phone-first): the three beats read top to bottom.
+   Three columns need ≈403px of viewport for their legends at full
+   legibility ("STANDBY" is the widest word) — below that they clipped the
+   deck (T-I1-VERIFY), so they re-flow, never shrink. */
+#corridor {
+  display: none;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px;
+}
+
+.zone {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  padding: 12px 12px 11px;
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  transition: border-color 160ms var(--snap), background 160ms var(--snap),
+    box-shadow 160ms var(--snap);
+}
+
+.zone-lamp {
+  grid-row: 1 / span 2;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lamp-off);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  transition: background-color 140ms var(--snap), box-shadow 140ms var(--snap);
+}
+
+.zone-legend {
+  font: 400 13px/1 var(--font-legend);
+  letter-spacing: 0.14em;
+  color: var(--cream-dim);
+  transition: color 140ms var(--snap);
+}
+
+.zone-line {
+  margin-top: 4px;
+  font: 400 12px/1.45 var(--font-body);
+  color: var(--cream-dim);
+  transition: color 140ms var(--snap);
+}
+
+/* ----------------------------------------------------------- gate plates */
+.gate-plate { border-color: rgba(255, 180, 84, 0.38); }
+
+.gate-title {
+  font: 400 15px/1.2 var(--font-legend);
+  letter-spacing: 0.16em;
+  color: var(--lamp);
+  margin-bottom: 14px;
+}
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.hazard-pict {
+  width: 64px;
+  height: 64px;
+  color: var(--lamp);
+  flex: 0 0 auto;
+}
+
+.gate-imperative {
+  font: 700 16px/1.4 var(--font-body);
+  letter-spacing: 0.01em;
+  color: var(--cream);
+}
+
+.gate-advisory {
+  margin-top: 8px;
+  font: 400 14px/1.55 var(--font-body);
+  color: var(--cream-dim);
+}
+
+.gate-facts {
+  margin-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.gate-facts li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hairline);
+  font: 400 12.5px/1.5 var(--font-mono);
+  color: var(--cream-dim);
+}
+
+.gate-first {
+  margin-top: 12px;
+  font: 600 12.5px/1.5 var(--font-body);
+  letter-spacing: 0.05em;
+  color: var(--lamp);
+}
+.gate-returning {
+  margin-top: 12px;
+  font: 600 12.5px/1.5 var(--font-body);
+  letter-spacing: 0.05em;
+  color: var(--lamp-dim);
+}
+
+.why-lines { border-top: 1px solid var(--hairline); }
+.why-lines li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hairline);
+  font: 400 14.5px/1.55 var(--font-body);
+  color: var(--cream);
+}
+
+.denied-line {
+  font: 600 14.5px/1.55 var(--font-body);
+  color: var(--cream);
+}
+.denied-hint {
+  margin-top: 8px;
+  font: 400 13px/1.5 var(--font-body);
+  color: var(--cream-dim);
+}
+
+.screen-line {
+  font: 400 16px/1.5 var(--font-legend);
+  letter-spacing: 0.1em;
+  color: var(--cream);
+  text-align: center;
+  padding: 6px 0 2px;
+}
+
+/* ------------------------------------------------------------------ keys */
+.keys {
+  display: none;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* keys mounted inside a contextual plate ride the plate's own visibility */
+#hazard .keys,
+#why-camera .keys,
+#denied .keys { display: flex; }
+
+.key {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 14px 18px;
+  font: 700 13px/1 var(--font-body);
+  letter-spacing: 0.14em;
+  color: var(--cream);
+  background: linear-gradient(180deg, #302214, #241a0f);
+  border: 1px solid #4a3620;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.08), 0 3px 8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+.key:hover {
+  background: linear-gradient(180deg, #3a2a18, #2b1f11);
+  border-color: #5f4627;
+}
+.key:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.5);
+}
+.key:disabled,
+.key[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.key-primary {
+  background: linear-gradient(180deg, var(--lamp-lit), #f2a23c);
+  border-color: #a86f24;
+  color: #221407;
+  box-shadow: inset 0 1px 0 rgba(255, 248, 228, 0.55), 0 4px 14px rgba(221, 150, 50, 0.3);
+}
+.key-primary:hover {
+  background: linear-gradient(180deg, #ffd28f, var(--lamp));
+  border-color: #bd7f2b;
+}
+
+.key-broadcast { flex: 1 1 100%; min-height: 58px; font-size: 15px; letter-spacing: 0.2em; }
+
+.switch-hint,
+.done-offer,
+.error-recover {
+  display: none;
+  margin: 12px 0 0;
+  font: 600 12.5px/1.55 var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--lamp);
+}
+.done-offer { color: var(--cream-dim); }
+
+/* ----------------------------------------------------------------- speed */
+.steps-field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.steps-field .legend { margin-bottom: 12px; }
+
+.steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.step { display: flex; flex-direction: column; gap: 8px; position: relative; }
+
+.step-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.step-key {
+  width: 100%;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 13px 16px;
+}
+
+.step-name {
+  font: 400 13px/1 var(--font-legend);
+  letter-spacing: 0.14em;
+}
+
+.step-wpm {
+  font: 600 13px/1 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--cream-dim);
+}
+
+.step-radio:checked + .step-key {
+  border-color: rgba(255, 180, 84, 0.6);
+  background: linear-gradient(180deg, #3a2a16, #2b1f10);
+  box-shadow: inset 0 0 0 1px rgba(255, 180, 84, 0.28),
+    inset 0 1px 0 rgba(255, 240, 210, 0.08);
+}
+.step-radio:checked + .step-key .step-wpm { color: var(--lamp); }
+.step-radio:focus-visible + .step-key { outline: 2px solid var(--lamp); outline-offset: 2px; }
+
+/* T-refine-1: through a committed run the detents freeze with the composer
+   (.message-input:disabled grammar on the machine-key dim) — inert to hover
+   and press; the checked step keeps its ring at the dim, so the pace that is
+   speaking stays readable while the group reads locked. */
+.step-radio:disabled + .step-key {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.step-detail,
+.step-caution { display: none; }
+
+.step-radio:checked ~ .step-detail,
+.step-radio:checked ~ .step-caution { display: block; }
+
+.step-detail {
+  font: 400 12.5px/1.5 var(--font-body);
+  color: var(--cream-dim);
+}
+
+.step-caution {
+  margin-top: 2px;
+  font: 600 12px/1.5 var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--lamp);
+}
+
+.speed-cap {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  font: 500 11.5px/1.4 var(--font-mono);
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+}
+
+/* ----------------------------------------------------------------- share */
+.share-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.share-carries {
+  flex: 1 1 200px;
+  font: 400 13px/1.55 var(--font-body);
+  color: var(--cream-dim);
+}
+
+.share-outcome,
+.shared-loaded {
+  margin-top: 10px;
+  font: 600 12.5px/1.5 var(--font-body);
+  letter-spacing: 0.04em;
+  color: var(--lamp);
+}
+
+/* --------------------------------------------------------------- footplate */
+.footplate {
+  text-align: center;
+  border-top: 1px solid var(--hairline);
+  padding: 18px 16px 26px;
+}
+
+.foot-line {
+  font: 500 11px/1.6 var(--font-mono);
+  letter-spacing: 0.18em;
+  color: var(--cream-dim);
+}
+
+/* ==================================================================== */
+/* STATE SNAPSHOTS — every F8 state (js/states.js STATE_LIST) as a      */
+/* complete static composition. I2 sets body[data-state]; I1 renders   */
+/* each state fully from these rules alone. Default levers sit in      */
+/* :root above; each state overrides only what its snapshot changes.   */
+/* ==================================================================== */
+
+/* -- printed status line + progress --------------------------------- */
+body[data-state="idle"] .status-line[data-state-line="idle"],
+body[data-state="preflight"] .status-line[data-state-line="preflight"],
+body[data-state="arming"] .status-line[data-state-line="arming"],
+body[data-state="awaiting-permission"] .status-line[data-state-line="awaiting-permission"],
+body[data-state="permission-denied"] .status-line[data-state-line="permission-denied"],
+body[data-state="unsupported"] .status-line[data-state-line="unsupported"],
+body[data-state="torch-ready"] .status-line[data-state-line="torch-ready"],
+body[data-state="screen-mode"] .status-line[data-state-line="screen-mode"],
+body[data-state="ready"] .status-line[data-state-line="ready"],
+body[data-state="broadcasting"] .status-line[data-state-line="broadcasting"],
+body[data-state="broadcasting-on-screen"] .status-line[data-state-line="broadcasting-on-screen"],
+body[data-state="paused"] .status-line[data-state-line="paused"],
+body[data-state="paused-on-screen"] .status-line[data-state-line="paused-on-screen"],
+body[data-state="done"] .status-line[data-state-line="done"],
+body[data-state="error"] .status-line[data-state-line="error"] { display: flex; }
+
+body[data-state="broadcasting"] .status-progress[data-state-progress="broadcasting"],
+body[data-state="broadcasting-on-screen"] .status-progress[data-state-progress="broadcasting-on-screen"],
+body[data-state="paused"] .status-progress[data-state-progress="paused"],
+body[data-state="paused-on-screen"] .status-progress[data-state-progress="paused-on-screen"],
+body[data-state="error"] .status-progress[data-state-progress="error"] { display: block; }
+
+body[data-state="broadcasting-on-screen"] .takeover-note { display: block; }
+
+/* -- transport: which key row a state mounts ------------------------- */
+#transport { display: none; }
+
+body[data-state="idle"] #transport,
+body[data-state="unsupported"] #transport,
+body[data-state="torch-ready"] #transport,
+body[data-state="screen-mode"] #transport,
+body[data-state="ready"] #transport,
+body[data-state="broadcasting"] #transport,
+body[data-state="broadcasting-on-screen"] #transport,
+body[data-state="paused"] #transport,
+body[data-state="paused-on-screen"] #transport,
+body[data-state="done"] #transport,
+body[data-state="error"] #transport { display: block; }
+
+body[data-state="idle"] .keys-cold,
+body[data-state="unsupported"] .keys-cold,
+body[data-state="torch-ready"] .keys-cold,
+body[data-state="screen-mode"] .keys-cold,
+body[data-state="ready"] .keys-cancel,
+body[data-state="broadcasting"] .keys-live,
+body[data-state="broadcasting-on-screen"] .keys-live-screen,
+body[data-state="paused"] .keys-paused,
+body[data-state="paused-on-screen"] .keys-paused,
+body[data-state="done"] .keys-done,
+body[data-state="error"] .keys-error { display: flex; }
+
+body[data-state="broadcasting"] .switch-hint,
+body[data-state="done"] .done-offer,
+body[data-state="error"] .error-recover { display: block; }
+
+/* -- contextual plates ------------------------------------------------ */
+#corridor,
+#hazard,
+#why-camera,
+#denied,
+#screen-note { display: none; }
+
+body[data-state="preflight"] #hazard { display: block; }
+body[data-state="awaiting-permission"] #why-camera { display: block; }
+body[data-state="permission-denied"] #denied { display: block; }
+body[data-state="unsupported"] #screen-note { display: block; }
+
+body[data-state="ready"] #corridor,
+body[data-state="broadcasting"] #corridor,
+body[data-state="broadcasting-on-screen"] #corridor,
+body[data-state="paused"] #corridor,
+body[data-state="paused-on-screen"] #corridor {
+  display: grid;
+}
+
+/* which choreography zone is lit */
+body[data-state="ready"] .zone[data-zone="standby"],
+body[data-state="broadcasting"] .zone[data-zone="go"],
+body[data-state="broadcasting-on-screen"] .zone[data-zone="go"],
+body[data-state="paused"] .zone[data-zone="go"],
+body[data-state="paused-on-screen"] .zone[data-zone="go"] {
+  border-color: rgba(255, 180, 84, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 180, 84, 0.09), rgba(255, 180, 84, 0.02)),
+    linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  box-shadow: var(--zone-halo);
+}
+body[data-state="ready"] .zone[data-zone="standby"] .zone-lamp,
+body[data-state="broadcasting"] .zone[data-zone="go"] .zone-lamp,
+body[data-state="broadcasting-on-screen"] .zone[data-zone="go"] .zone-lamp,
+body[data-state="paused"] .zone[data-zone="go"] .zone-lamp,
+body[data-state="paused-on-screen"] .zone[data-zone="go"] .zone-lamp {
+  background: var(--lamp-bg);
+  box-shadow: var(--lamp-halo-on);
+}
+body[data-state="ready"] .zone[data-zone="standby"] .zone-legend,
+body[data-state="broadcasting"] .zone[data-zone="go"] .zone-legend,
+body[data-state="broadcasting-on-screen"] .zone[data-zone="go"] .zone-legend,
+body[data-state="paused"] .zone[data-zone="go"] .zone-legend,
+body[data-state="paused-on-screen"] .zone[data-zone="go"] .zone-legend { color: var(--lamp); }
+body[data-state="ready"] .zone[data-zone="standby"] .zone-line,
+body[data-state="broadcasting"] .zone[data-zone="go"] .zone-line,
+body[data-state="broadcasting-on-screen"] .zone[data-zone="go"] .zone-line,
+body[data-state="paused"] .zone[data-zone="go"] .zone-line,
+body[data-state="paused-on-screen"] .zone[data-zone="go"] .zone-line { color: var(--cream); }
+
+/* -- share row --------------------------------------------------------- */
+#share { display: none; }
+body[data-state="idle"] #share,
+body[data-state="done"] #share,
+body[data-state="error"] #share { display: block; }
+
+/* -- the lamp ---------------------------------------------------------- */
+/* armed standby: torch-ready / screen-mode / ready */
+body[data-state="torch-ready"],
+body[data-state="screen-mode"],
+body[data-state="ready"] {
+  --lamp-bg: var(--lamp-dim);
+  --status-legend-ink: var(--cream);
+}
+
+/* live: the light is speaking */
+body[data-state="broadcasting"],
+body[data-state="broadcasting-on-screen"] {
+  --lamp-bg: var(--lamp-lit);
+  --lamp-halo-on: var(--lamp-halo);
+  --status-legend-ink: var(--lamp);
+}
+
+/* held: paused on either channel */
+body[data-state="paused"],
+body[data-state="paused-on-screen"] {
+  --lamp-bg: var(--lamp-dim);
+  --status-legend-ink: var(--lamp);
+}
+
+/* -- the tape: strip position + spoken/live groups -------------------- */
+/* I2 (js/app.js) drives the traverse live: it sets --strip-shift inline
+   (group center under the head) and toggles .tg-spoken/.tg-live as the
+   conductor's progress events name each letter. The base .tg-spoken /
+   .tg-live rules above carry the inks; these rules only soften the live
+   ring in the held/fault states (I1's paused/error treatment). */
+
+/* held: paused on either channel; fault: the run stopped early */
+body[data-state="paused"] .tg-live .tp,
+body[data-state="paused-on-screen"] .tg-live .tp,
+body[data-state="error"] .tg-live .tp {
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(255, 164, 60, 0.45);
+}
+
+/* the ready-state choreography beat: STANDBY hands over to CAUTION before
+   GO (body[data-beat] is set/removed by js/app.js; only meaningful in
+   ready — broadcasting lights the GO zone through the rules above). */
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="standby"] {
+  border-color: var(--hairline);
+  background: linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  box-shadow: none;
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="standby"] .zone-lamp {
+  background: var(--lamp-off);
+  box-shadow: none;
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="standby"] .zone-legend,
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="standby"] .zone-line {
+  color: var(--cream-dim);
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="caution"] {
+  border-color: rgba(255, 180, 84, 0.55);
+  background:
+    linear-gradient(180deg, rgba(255, 180, 84, 0.09), rgba(255, 180, 84, 0.02)),
+    linear-gradient(180deg, var(--panel-hi), var(--panel-lo));
+  box-shadow: var(--zone-halo);
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="caution"] .zone-lamp {
+  background: var(--lamp-dim);
+  box-shadow: var(--lamp-halo-on);
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="caution"] .zone-legend {
+  color: var(--lamp);
+}
+body[data-state="ready"][data-beat="caution"] .zone[data-zone="caution"] .zone-line {
+  color: var(--cream);
+}
+
+/* ================================================================== */
+/* MOTION GRAMMAR (I3) — the register moves like one machine, not a    */
+/* bag of effects. Every stroke uses --drive or --snap, every stroke   */
+/* is bounded ≤200ms (the tape traverse alone is progress-driven),     */
+/* nothing loops outside a broadcast, and the broadcast flash itself   */
+/* is the product — it is never dimmed or softened by these layers     */
+/* (F4's law, documented in js/screen.js; reduced-motion flattens      */
+/* DECORATION, never signal).                                         */
+/* ================================================================== */
+
+/* -- the punch press: a genuinely new group settles under the die ---- */
+/* js/app.js marks only newly punched groups .tg-new (identity = same
+   character at the same position); re-rendered unchanged groups never
+   re-press, so typing presses exactly what was typed. */
+@keyframes punch-press {
+  from { transform: scaleY(1.55); opacity: 0.35; }
+}
+.tg-new .tp { animation: punch-press 140ms var(--snap); }
+
+/* -- the plate snap: bays, rows, and printed lines SEAT into place --- */
+/* A state swap is a mechanical reconfiguration, not a carousel: the
+   mounting plate drops 2px onto its stops. No opacity fades anywhere. */
+@keyframes plate-snap {
+  from { transform: translateY(-2px); }
+}
+#hazard, #why-camera, #denied, #screen-note,   /* state plates */
+#corridor, #share,                             /* corridor + share bays */
+#transport .keys,                              /* rows swapping in the bay */
+.status-line, .status-progress, .takeover-note { /* printed station lines */
+  animation: plate-snap 130ms var(--snap);
+}
+
+/* -- the fire: one bounded pulse per mark, only while broadcasting --- */
+/* js/app.js alternates body.fire-a / body.fire-b on each progress
+   event — alternating ANIMATION NAMES is what restarts a keyframe
+   without reflow tricks; leaving the broadcasting states clears both.
+   The read-head lamp reports every mark spoken; at composed widths
+   (≥720px) the ground echoes the light faintly — the desktop broadcast
+   echo. Both layers ride the capability flattening below. */
+@keyframes lamp-fire-a {
+  from {
+    background-color: #ffe6b5;
+    box-shadow: 0 0 0 3px rgba(255, 205, 125, 0.5),
+      0 0 20px 6px rgba(255, 176, 84, 0.55);
+  }
+}
+@keyframes lamp-fire-b {
+  from {
+    background-color: #ffe6b5;
+    box-shadow: 0 0 0 3px rgba(255, 205, 125, 0.5),
+      0 0 20px 6px rgba(255, 176, 84, 0.55);
+  }
+}
+body.fire-a .head-lamp { animation: lamp-fire-a 180ms var(--snap); }
+body.fire-b .head-lamp { animation: lamp-fire-b 180ms var(--snap); }
+
+/* the ground echo surface: invisible unless the light is firing */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(130% 100% at 50% 32%,
+    rgba(255, 190, 110, 0.09), rgba(255, 190, 110, 0.035) 45%, transparent 70%);
+}
+@keyframes ground-echo-a { from { opacity: 1; } }
+@keyframes ground-echo-b { from { opacity: 1; } }
+@media (min-width: 720px) {
+  body.fire-a::before { animation: ground-echo-a 190ms ease-out; }
+  body.fire-b::before { animation: ground-echo-b 190ms ease-out; }
+}
+
+/* ------------------------------------------------------------ wides */
+/* minmax(0,…) on every content-bearing track (corridor zones, speed
+   steps, deck columns): a bare 1fr floors at the item's min-content and
+   forced the deck past the viewport — the ≤385px corridor break. */
+@media (min-width: 480px) {
+  #corridor { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 560px) {
+  .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 720px) {
+  :root {
+    --band-h: 176px;
+    --char-top: 34px;
+    --marks-top: 96px;
+  }
+  /* Punch metrics stay fixed at every width: group positions are authored
+     in px against dot 14 / dash 42 / gap 10 (see index.html inline styles). */
+  .head-slot { top: 80px; height: 50px; }
+  .tg-char { font-size: 16px; }
+  .gate-grid { gap: 20px; }
+}
+
+@media (min-width: 900px) {
+  .deck {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+  #composer, #station, #corridor, #hazard, #why-camera, #denied, #screen-note, #transport, #speed {
+    grid-column: 1 / -1;
+  }
+  /* when the share row is mounted, speed and share sit as the two bottom bays */
+  body[data-state="idle"] #speed,
+  body[data-state="done"] #speed,
+  body[data-state="error"] #speed { grid-column: auto; }
+  .nameplate { padding-top: 30px; }
+  .key-broadcast { flex: 0 1 auto; padding: 16px 40px; }
+}
+
+@media (min-width: 1240px) {
+  body { font-size: 17px; }
+}
+
+/* Landscape phone (740×360-class): the hold-it-up scene is portrait,
+   but landscape must read too — a shallower tape band and a tighter
+   nameplate keep the instrument whole with no overlap; the page scrolls
+   vertically, never horizontally. */
+@media (max-height: 480px) and (orientation: landscape) {
+  :root {
+    --band-h: 128px;
+    --char-top: 22px;
+    --marks-top: 64px;
+  }
+  .head-slot { top: 49px; height: 40px; }
+  .nameplate { padding-top: 12px; padding-bottom: 10px; }
+  .deck { padding-top: 10px; }
+}
+
+/* Notches: the viewport runs edge to edge (viewport-fit=cover in
+   index.html); the frames that hold controls inset past the unsafe
+   zone. The tape band itself stays full-bleed — it crosses the whole
+   instrument by design. */
+@supports (padding: max(0px)) {
+  .deck {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .nameplate {
+    padding-top: max(22px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  .footplate {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: max(26px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ------------------------------------------------- capability layers */
+/* Arcade's law (design-brief.md): every glow and every motion is a
+   capability layer that degrades to crisp static with ZERO information
+   loss — the read-head still positions (the transform still applies,
+   instantly), progress still prints numerically, the live ring still
+   marks the group under the head.
+
+   The broadcast flash is NOT one of these layers. The light IS the
+   message; dimming or fading it would erase information (F4's law,
+   js/screen.js: no transitions on the flash, no reduced-motion
+   carve-out). These layers flatten decoration only — never signal. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lamp-glow: rgba(255, 176, 84, 0);
+    --lamp-halo: 0 0 0 0 rgba(255, 176, 84, 0);
+    --zone-halo: 0 0 0 0 rgba(255, 176, 84, 0);
+    --punch-glow: 0 0 0 0 rgba(255, 180, 84, 0);
+  }
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+  .tg-live .tp,
+  body[data-state="broadcasting"] .tp,
+  body[data-state="broadcasting-on-screen"] .tp {
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55),
+      0 0 0 2px rgba(255, 164, 60, 0.7);  /* the ring carries the info */
+  }
+}
+
+/* Save-Data arrives as a request header — CSS cannot see it — so
+   js/app.js mirrors navigator.connection.saveData onto <html> as this
+   class hook. It flattens exactly the layers reduced-motion flattens:
+   glows and motion off, information intact, broadcast flash untouched. */
+html.cap-low {
+  --lamp-glow: rgba(255, 176, 84, 0);
+  --lamp-halo: 0 0 0 0 rgba(255, 176, 84, 0);
+  --zone-halo: 0 0 0 0 rgba(255, 176, 84, 0);
+  --punch-glow: 0 0 0 0 rgba(255, 180, 84, 0);
+}
+html.cap-low *,
+html.cap-low *::before,
+html.cap-low *::after {
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
+}
+html.cap-low .tg-live .tp,
+html.cap-low body[data-state="broadcasting"] .tp,
+html.cap-low body[data-state="broadcasting-on-screen"] .tp {
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(255, 164, 60, 0.7);
+}
