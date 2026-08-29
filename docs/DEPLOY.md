@@ -145,6 +145,22 @@ later (irrelevant for a one-shot deploy); to update, create a new deployment
 the same way (deployments are atomic); drag-and-drop accepts up to 1,000 files
 / 25 MiB each — this bundle is 12 small files.
 
+### Option D — Cloudflare Workers, Git-connected (push-to-deploy)
+
+The repo ships a committed `wrangler.jsonc` (Worker name `morse-code`,
+static assets served from the repo root). In the Cloudflare dashboard:
+**Workers & Pages** → **Create** → connect the GitHub repo → accept the
+defaults (no build command; deploy command `npx wrangler deploy`). Every
+push to `main` redeploys automatically; live at
+`https://morse-code.<your-subdomain>.workers.dev` (HTTPS automatic).
+
+**Why the config is committed:** without it, Wrangler runs its interactive
+setup inside the build, installing itself as a local devDependency — the
+resulting `node_modules/workerd` (146 MiB) lands in the assets directory and
+the deploy fails Workers' 25 MiB per-file limit. With the config present,
+setup is skipped, nothing is installed into the repo, and the upload is just
+the committed files (~2 MiB).
+
 ---
 
 ## 3. Post-deploy verification checklist
