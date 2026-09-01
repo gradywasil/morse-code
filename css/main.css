@@ -1301,7 +1301,7 @@ body[data-mode="receive"] #eye {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px; /* the footplate minimum — the ramp's floor */
   letter-spacing: 0.18em;
   color: var(--cream-dim);
   opacity: 0.9;

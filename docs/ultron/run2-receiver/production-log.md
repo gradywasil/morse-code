@@ -171,3 +171,26 @@ Created 2026-09-01 at production start. Plan: `docs/ultron/run2-receiver/plan.md
 **Status:** completed 2026-09-01 (handover delivered; results user-owned). `docs/DEVICE-TEST.md` extended with the RUN 2 RECEIVER section: two-phone setup, the R1 demo journey (plate-before-prompt, in-gesture grant, meter truth transitions, tape punching, 5 s finalize, clipboard), R2 speed matrix (BRISK flagged as the tight subjective case), R3 light sources (screen sender + best-effort hand flashlight), R4 honest-degradation battery (mid-join PARTIAL, silence vs noise meters, saturation hint + distance, backgrounding finalize, OS camera indicator off), R5 privacy spot-checks, and the report-back format feeding the T-Q3-run2 results entry. Receiver expectations per engine match research R1/R2 (incl. the no-exposure-control note for Safari/Firefox). Docs-only; commands verbatim from the v1 §1 setup (no new commands to verify).
 
 **Run-2 production is now code-complete: all 14 plan tasks delivered and validated.**\n
+## T-finishing — document + critique + refinements + README [ultron-impeccable, approval mode]
+
+**Status:** COMPLETE 2026-09-01.
+
+- **Document pass:** DESIGN.md additive receive components (Mode Lever, Aperture, Hearing Meter, Received Record, Receive Transport) + two Do's and two Don'ts (aperture small at every width; never animate/freeze the aperture; words are the announcement unit) + the nested-radius law and the shutter shadow literal (refinement 2). Sidecar +5 ds-components (schema-valid, proper objects). Surface brief notes the receive scope. v1 sections untouched.
+- **Critique pass:** regex-degraded (disclosed, same mode as every v1 run), diffed against the v1 baseline detector output (HEAD~1: 22 findings) — 26 "new" signatures of which 18 re-adjudicated as v1's known ramp/gradient undercount in shifted lines; **8 genuine run-2 advisories, all P3** (one real type-ramp miss: the 10px shutter micro-label; nested radii + shadow literal; four sizes that ARE documented ramp steps the regex misses). Qualitative pass verified every named world rule on the receive surface (One Lamp, Ink Ledger-mapped-to-hearing, Three Voices, Warm Ground, motion curves, photosafety at 13–20% viewport). Snapshot: `.impeccable/critique/2026-09-01T__index-html-run2.md`. No P0/P1/P2 → polish-only queue; closing critique skipped per the rule (user chose the recommended path).
+- **Refinements (user-approved, both done):** (1) shutter micro-label 10px → 11px (the documented footplate floor); (2) DESIGN.md nested-radius + shadow documentation. Checklist: `refinement.md` (2/2 done). Suite 559/559 after each.
+- **README:** rewritten as the front page for both directions — the two-direction story up top, the re-scoped privacy stance verbatim in the IMPORTANT callout, receive usage/troubleshooting, 559 tests, 13 modules.
+
+**Known deviations / honest records:** regex-degraded critique mode; the receive transport sits below the first fold at 390px (first-viewport law was written for the broadcast key — recorded, accepted); runtime rigs disposable per the v1 pattern; the '.'/'+' ITU receive-side collision documented in js/decoder.js.
+
+**Remaining user-owned acts:** the two-phone device script (docs/DEVICE-TEST.md RUN 2 section, results → T-Q3-run2) and redeploying the updated bundle per docs/DEPLOY.md.
+
+## FINAL ACCEPTANCE — run 2 closed 2026-09-01
+
+User-approved at the final gate ("Accept — commit + close run 2"). Tally: 14/14 plan
+tasks (S2 delivered inside I2 per the recorded sequencing adjustment), 2/2 finishing
+refinements, 559/559 tests at close, E2E green at all three WPM speeds, a11y 11/11,
+privacy matrix 19/19. User gates honored: 7 (town hall, design, plan, research
+dispositions, production, finishing action summary, final acceptance). Known
+deviations documented (regex-degraded critique; first-fold note; ITU '.'/'+' receive
+collision; runtime rigs disposable). Remaining acts are user-owned by design: the
+two-phone device script (T-Q3-run2 results) and redeploy.

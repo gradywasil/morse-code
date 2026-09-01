@@ -194,6 +194,27 @@ Inset slot: ground-deep fill, 1px #43301d border, 8px radius, 14px padding, mono
 ### Status Station
 Under the head: 9px station lamp + stencil status legend (idle cream-dim / live amber) + machine-dialogue copy (Barlow 15px) + mono progress line (`MARK n OF m · STEP — W WPM`, amber). Takeover notes print in amber 600. aria-live polite on the station itself — states announce; every per-mark progress line carries `aria-live="off"`, so the visible mark ledger never chatters the announcement channel.
 
+### The Mode Lever (run 2)
+Two radio-driven machine keys (BROADCAST | RECEIVE) at the top of the deck — the register's direction switch. The active position carries the amber ring; the ring mirrors BOTH the radio's checked state and `body[data-mode]` so static snapshots stay honest. Frozen through any committed run of either mode (the v1 disabled grammar). Focus rides the hidden radio (`:focus-visible + .mode-key`, 2px lamp).
+
+### The Aperture (the eye)
+
+Nested-radius law: an element inset inside a framed plate carries the outer
+radius minus the frame padding (the aperture: 4px cap outside, 2px inside its
+4px frame) — machined nesting, not a second radius family. The shutter's
+inset shadow literal rgba(0,0,0,0.6) is the deepest slot shadow in the system
+(the eye's well), recorded here as a one-off material value.
+Small metal-framed inset window (head-cap metal ramp, 4px cap radius, max 200px, 3:4) holding the live preview `<video>` — the instrument's eye and the stream's only sanctioned consumer besides the 32×32 sampling canvas. Small by photosafety law: ~13% of viewport area at 390px, ~20% at 320px (WCAG 2.3.1 small-area relief; the only flashing region, replaying sender flashes ≤5 Hz). Closed = the shutter plate: near-black radial with the micro-plate legend "THE EYE IS CLOSED" (mono 10px, cream-dim). The shutter is state-derived (open through armed/active, closed at idle/done — the eye closes the moment the camera releases, never a frozen frame).
+
+### The Hearing Meter
+The station's ledger for receive truth: one visible mono line from {HEARING NOTHING, HEARING LIGHT, LIGHT BUT NOT MORSE} (decoding in lamp amber), an actionable hint under silence/noise, the saturated warning and the PARTIAL note in amber 600. Drives `body[data-meter]`; textual truth first — receiving never requires watching the picture. A visually-hidden `aria-live="polite"` paragraph announces decoded WORDS only (letters settle silently; config lives in markup per the refinement-#2 law).
+
+### The Received Record (the tape, inverted)
+Blank paper until light punches it: marks append as punch holes inside a growing live group (`.tp-new` die press per heard mark), letters print above and settle to spoken ink, word gaps are spacing. The Ink Ledger maps to hearing: blank = unheard, live ink + amber ring = being heard, spoken = decoded. The lock-time replay and forced bootstrap punch completed groups directly (sequence-independent rendering). The strip shift keeps the record's edge under the fixed head (the broadcast traverse, receive way).
+
+### Receive Transport
+STOP LISTENING (a stop key) through armed/active; COPY MESSAGE + LISTEN AGAIN at done with the done note (quiet-closed copy or the honest PARTIAL record — numbers derived from the session constant).
+
 ### Share Row
 Inline: carries-line (13px cream-dim) + COPY LINK machine key; outcome prints in amber 600 12.5px. The hash itself never renders as UI chrome — the URL is the artifact.
 
@@ -207,10 +228,14 @@ Inline: carries-line (13px cream-dim) + COPY LINK machine key; outcome prints in
 - **Do** theme the browser surfaces you did not draw: selection tint, caret color, focus ring (2px lamp, +2px, radius-preserving), scrollbar — a paper-lo thumb riding the ground, thin, 10px bar pill-capped at 9px like a punch hole (hover steps paper-lo → paper); the viewport is the page's only scroller, so the theme never forces a bar where none exists.
 - **Do** keep machine motion on the two curves (`--drive`, `--snap`), strokes ≤200 ms, single-iteration; the tape traverse is the one progress-driven exception.
 
+- **Do** keep the aperture small at every width — the photosafety law outranks viewport drama; the meter carries the truth non-visually.
+
 ### Don't:
 - **Don't** add steampunk ornament — no brass, cogs, gauges, or antique texture; hairlines and inset slots carry the machine.
 - **Don't** introduce blue, neutral gray, or cool secondary text; secondary ink tints from the paper hue.
 - **Don't** print sentences in stencil or measurements in Barlow (The Three Voices Rule).
 - **Don't** dim the tape's spoken ink below 4.5:1 at the actual letter-row backgrounds, or break the unspoken > live > spoken ordering (The Ink Ledger Rule).
 - **Don't** use kickers/eyebrows above headings, gradient text, glyph/emoji icons, hard offset shadows, or a system display face — the world never earns them.
+- **Don't** animate the aperture's content — it is a live picture, not chrome; and never show a frozen frame after release.
+- **Don't** announce received letters individually — words are the announcement unit (the refinement-#2 law).
 - **Don't** add loops, bounces, or entrance fades; plates seat (translate), they never dissolve (opacity belongs only to the die-press keyframe and disabled states).
