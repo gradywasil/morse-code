@@ -356,3 +356,91 @@ result.
 Report back in any form (the table, bullet points, a voice memo transcription) —
 results get logged as the Q3 completion entry in `docs/ultron/production-log.md`,
 and Q3 closes when they're in.
+
+---
+
+# RUN 2 — THE RECEIVER (added 2026-09-01)
+
+**What this adds:** the RECEIVE half. One phone broadcasts (torch or screen), a
+second phone watches with its camera and decodes the message back into text —
+no pairing, no agreed speed. Everything below was verified end-to-end with a
+fake camera in a real browser pipeline (synthetic light → decode → clipboard,
+all three speeds); what automation cannot check is your actual cameras,
+auto-exposure behavior, and room lighting. **You need two phones.**
+
+**Receiver expectations by device (research R1/R2):**
+
+| Receiver browser | Expectation |
+|---|---|
+| Android + Chrome-family | Best case: rVFC sampling, possible silent exposure lock where hardware advertises it |
+| iPhone + Safari 15.4+ | Works; no exposure control exists (verified in WebKit source) — rely on distance guidance |
+| Firefox (any) | Works (rVFC since 132); no exposure control — same guidance |
+
+## R1. First receive (the demo itself) — ~4 min
+
+Setup: phone A (sender) and phone B (receiver), same URL, a dim-ish room,
+2–4 m apart. Sender picks a short word (e.g. HI), LEARNER speed.
+
+1. **[objective]** B: tap **RECEIVE** on the mode lever → the WHY THE CAMERA
+   PROMPT plate appears **before** any browser prompt.
+2. **[objective]** B: tap **BEGIN LISTENING** → the browser camera prompt
+   appears from that tap (not before), grant it → the aperture goes live,
+   meter reads **HEARING NOTHING**, station reads LISTENING.
+3. **[objective]** A: press BROADCAST. Within the first 1–2 letters B's meter
+   flips to **HEARING LIGHT** and dots punch onto the paper tape.
+4. **[objective]** B: letters print above their punches as words complete;
+   the read-head lamp flickers with each heard flash.
+5. **[objective]** A's message ends → B's meter returns to quiet → after
+   ~5 s the session finalizes: **HEARD** state, the message stands on the
+   tape, **COPY MESSAGE** available.
+6. **[objective]** B: tap COPY MESSAGE, paste anywhere → the text matches
+   what A sent (a lost first letter is honest — see R4).
+
+## R2. Speed matrix — ~6 min
+
+Repeat R1 with HI or SOS at each step, sender choosing the speed, receiver
+doing NOTHING differently: **[objective]** decode succeeds at LEARNER 5,
+STANDARD 8. **[subjective]** BRISK 12 (dots are 100 ms — tightest case):
+does it decode, and does it feel reliable or flaky?
+
+## R3. Light sources — ~5 min
+
+1. **[objective]** A on an iPhone or desktop (screen-flash mode) broadcasting:
+   B still decodes (hold A's screen facing B, full brightness).
+2. **[subjective]** A bare flashlight pointed by hand sending rough Morse
+   (dot ~½ s): best-effort — report what happens, no pass/fail.
+
+## R4. Honest-degradation checks — ~4 min
+
+1. **[objective]** B taps RECEIVE and grants the camera **while A is already
+   mid-message** → B's tape shows a **PARTIAL** note; the message decodes
+   from wherever listening caught a clean edge, never a fabricated start.
+2. **[objective]** B aims away from the light (at a wall) → meter reads
+   HEARING NOTHING with the aim hint; no text appears.
+3. **[subjective]** B aims at a busy light (window, LED sign) → meter reads
+   **LIGHT, BUT NOT MORSE** (noise), not garbage text.
+4. **[subjective]** B very close (<0.5 m) to the torch → the BLOWN OUT hint
+   appears; moving back restores decoding. This is the saturation case R2
+   research flagged as the physical limit.
+5. **[objective]** While listening, B switches the phone away (backgrounds
+   the tab) → return: the session finalized, the aperture is dark.
+6. **[objective]** After any session ends, the camera indicator (OS-level
+   dot/LED) is OFF — the eye closed.
+
+## R5. Privacy spot-check — ~1 min
+
+1. **[objective]** With the receiver idle (not listening), grant-flow only
+   after BEGIN LISTENING: reload the page in RECEIVE mode and just wait at
+   the plate → no camera prompt ever arrives on its own.
+2. **[objective]** Browser padlock/site-info → camera permission is asked
+   in-context, and the page's network tab (desktop) shows no requests
+   beyond fonts while receiving.
+
+## What to report back
+
+For each numbered check: pass/fail (objective) or fine/off (subjective), plus
+phone models + browser versions, room brightness (dark/dim/normal/bright),
+and distance. For BRISK flakiness: roughly what fraction of letters decoded.
+Results land in `docs/ultron/production-log.md` as the **T-Q3-run2** entry;
+noise/saturation reports feed the meter-hint copy and (if needed) a
+follow-up on the exposure posture (research D5's deferred user-facing lock).

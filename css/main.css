@@ -1207,3 +1207,246 @@ html.cap-low body[data-state="broadcasting-on-screen"] .tp {
   box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.55),
     0 0 0 2px rgba(255, 164, 60, 0.7);
 }
+
+/* ==========================================================================
+   RUN 2 — THE REGISTER LISTENS (I1, docs/ultron/run2-receiver/plan.md)
+   The register inverts: the mode lever chooses a direction, the aperture
+   is the instrument's eye, the meter is the station's ledger, and the
+   tape receives punches from heard light. Additive section — every v1
+   rule above is untouched; receive states match none of them.
+   ========================================================================== */
+
+/* -- the mode lever ----------------------------------------------------- */
+.bay-mode { padding: 10px 16px 12px; }
+.mode-field { border: 0; margin: 0; padding: 0; }
+.mode-lever {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.mode-radio { position: absolute; opacity: 0; pointer-events: none; }
+.mode-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  cursor: pointer;
+}
+.mode-name {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+}
+.mode-radio:checked + .mode-key,
+body[data-mode="receive"] .mode-radio[value="RECEIVE"] + .mode-key,
+body[data-mode="broadcast"] .mode-radio[value="BROADCAST"] + .mode-key {
+  border-color: rgba(255, 180, 84, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 180, 84, 0.4), var(--zone-halo);
+}
+.mode-radio:checked + .mode-key .mode-name,
+body[data-mode="receive"] .mode-radio[value="RECEIVE"] + .mode-key .mode-name,
+body[data-mode="broadcast"] .mode-radio[value="BROADCAST"] + .mode-key .mode-name { color: var(--lamp); }
+.mode-radio:focus-visible + .mode-key { outline: 2px solid var(--lamp); outline-offset: 2px; }
+.mode-radio:disabled + .mode-key {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.mode-hint {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  color: var(--cream-dim);
+}
+
+/* -- the eye: aperture + meter ------------------------------------------- */
+#eye { display: none; }
+body[data-mode="receive"] #eye {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.aperture {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  max-width: 200px; /* small by photosafety law — a minority fraction of the viewport */
+  border-radius: 4px; /* the head-cap radius: machined metal, not chrome */
+  background: linear-gradient(180deg, var(--metal-hi), var(--metal-lo));
+  padding: 4px;
+  box-shadow: inset 0 1px 0 rgba(255, 214, 166, 0.14), 0 3px 8px rgba(0, 0, 0, 0.32);
+}
+.aperture-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 2px;
+  background: var(--ground-deep);
+  transform: scaleX(1); /* environment cameras render mirrored only for faces */
+}
+.aperture-shutter {
+  position: absolute;
+  inset: 4px;
+  border-radius: 2px;
+  background:
+    radial-gradient(120% 90% at 50% 40%, #1c140b, var(--ground-deep)),
+    var(--ground-deep);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.aperture-shutter::after {
+  content: "THE EYE IS CLOSED";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--cream-dim);
+  opacity: 0.9;
+}
+.aperture[data-rx-camera="on"] .aperture-shutter { display: none; }
+/* The eye closes the moment the camera releases — never a frozen frame.
+   Static truth: the camera is live through armed/active (I2 drives
+   data-rx-camera at runtime; these rows keep snapshots honest). */
+body[data-mode="receive"][data-state="receive-armed"] .aperture-shutter,
+body[data-mode="receive"][data-state="receive-active"] .aperture-shutter { display: none; }
+
+.meter { min-width: 0; }
+.meter-line {
+  display: none;
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--cream-dim);
+}
+.meter-line[data-meter-line="silence"] { display: block; }
+.meter-line[data-meter-line="decoding"] { color: var(--lamp); }
+.meter-line[data-meter-line="noise"] { color: var(--cream); }
+.meter-hint {
+  display: none;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--cream-dim);
+}
+.meter-hint[data-meter-hint="silence"] { display: block; }
+.meter-saturated,
+.meter-partial {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--lamp);
+}
+body[data-mode="receive"][data-meter="noise"] .meter-line { display: none; }
+body[data-mode="receive"][data-meter="noise"] .meter-line[data-meter-line="noise"] { display: block; }
+body[data-mode="receive"][data-meter="noise"] .meter-hint { display: none; }
+body[data-mode="receive"][data-meter="noise"] .meter-hint[data-meter-hint="noise"] { display: block; }
+body[data-mode="receive"][data-meter="decoding"] .meter-line { display: none; }
+body[data-mode="receive"][data-meter="decoding"] .meter-line[data-meter-line="decoding"] { display: block; }
+body[data-mode="receive"][data-meter="decoding"] .meter-hint { display: none; }
+
+/* -- receive-mode chrome -------------------------------------------------- */
+/* Broadcast-only bays stand down when the register listens. */
+body[data-mode="receive"] #composer,
+body[data-mode="receive"] #speed,
+body[data-mode="receive"] #share,
+body[data-mode="receive"] #corridor { display: none; }
+
+/* The station speaks receive lines only in receive mode. */
+.status-line[data-receive-line] { display: none; }
+body[data-mode="receive"] .status-line[data-state-line],
+body[data-mode="receive"] .status-progress { display: none; }
+body[data-mode="receive"][data-state="receive-idle"] .status-line[data-receive-line="receive-idle"],
+body[data-mode="receive"][data-state="receive-preflight"] .status-line[data-receive-line="receive-preflight"],
+body[data-mode="receive"][data-state="receive-arming"] .status-line[data-receive-line="receive-arming"],
+body[data-mode="receive"][data-state="receive-denied"] .status-line[data-receive-line="receive-denied"],
+body[data-mode="receive"][data-state="receive-unsupported"] .status-line[data-receive-line="receive-unsupported"],
+body[data-mode="receive"][data-state="receive-armed"] .status-line[data-receive-line="receive-armed"],
+body[data-mode="receive"][data-state="receive-active"] .status-line[data-receive-line="receive-active"],
+body[data-mode="receive"][data-state="receive-done"] .status-line[data-receive-line="receive-done"],
+body[data-mode="receive"][data-state="receive-error"] .status-line[data-receive-line="receive-error"] { display: flex; }
+
+/* The tape: blank paper until light punches it; the received record
+   replaces the broadcast strip while receiving/done. */
+.tape-rx { display: none; }
+body[data-mode="receive"] .tape-strip[data-tape="send"] { display: none; }
+body[data-mode="receive"][data-state="receive-active"] .tape-rx,
+body[data-mode="receive"][data-state="receive-done"] .tape-rx,
+body[data-mode="receive"][data-state="receive-error"] .tape-rx { display: flex; }
+
+/* Receive plates (their key rows ride v1's .keys default — shown with
+   the plate, never before it). */
+#why-camera-receive,
+#receive-denied { display: none; }
+#why-camera-receive .keys,
+#receive-denied .keys { display: flex; }
+body[data-mode="receive"][data-state="receive-preflight"] #why-camera-receive { display: block; }
+body[data-mode="receive"][data-state="receive-denied"] #receive-denied { display: block; }
+
+/* Receive transport rows. */
+.keys-receive-live,
+.keys-receive-done,
+.receive-done-offer { display: none; }
+body[data-mode="receive"][data-state="receive-armed"] #transport,
+body[data-mode="receive"][data-state="receive-active"] #transport,
+body[data-mode="receive"][data-state="receive-done"] #transport { display: block; }
+body[data-mode="receive"][data-state="receive-armed"] .keys-receive-live,
+body[data-mode="receive"][data-state="receive-active"] .keys-receive-live { display: flex; }
+body[data-mode="receive"][data-state="receive-done"] .keys-receive-done { display: flex; }
+body[data-mode="receive"][data-state="receive-done"] .receive-done-offer { display: block; }
+
+/* Narrow phones: the eye stacks (aperture above meter), never shrinks
+   past legibility — the minmax(0, 1fr) law. */
+@media (max-width: 559px) {
+  body[data-mode="receive"] #eye { grid-template-columns: minmax(0, 1fr); }
+  .aperture { max-width: 180px; }
+}
+
+/* The mode lever freezes through any committed run (the v1 disabled
+   grammar; app.js drives the disabled property). */
+
+/* The receive word-announce region: visually hidden, audibly polite. */
+.sr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* -- run 2 receive: lamp states + seating + per-mark press (I3) --------- */
+/* The head lamp reports the hearing truth with the broadcast grammar:
+   dim when the eye is armed and open, lit while light speaks. */
+body[data-state="receive-armed"] {
+  --lamp-bg: var(--lamp-dim);
+  --status-legend-ink: var(--cream);
+}
+body[data-state="receive-active"] {
+  --lamp-bg: var(--lamp-lit);
+  --lamp-halo-on: var(--lamp-halo);
+  --status-legend-ink: var(--lamp);
+}
+
+/* The receive surfaces seat like every plate (no opacity anywhere). */
+#eye,
+#why-camera-receive,
+#receive-denied,
+.meter-line,
+.meter-hint,
+.receive-done-offer {
+  animation: plate-snap 130ms var(--snap);
+}
+
+/* A mark punching into the GROWING live group presses once (the die
+   grammar; .tg-new covers whole groups, .tp-new covers marks appended
+   to a group already on the tape). Both ride the capability flattening. */
+.tp-new { animation: punch-press 140ms var(--snap); }

@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Saira+Stencil+One&family=Spline+Sans+Mono:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="css/main.css">
 </head>
-<body data-state="idle">
+<body data-state="idle" data-mode="broadcast">
   <!--
   THE REGISTER — direction contract (code-led; world locked by user 2026-08-28)
 
@@ -49,6 +49,20 @@
     <p class="name-sub">A MACHINE FOR SPEAKING MORSE BY LIGHT</p>
   </header>
 
+  <!-- Run 2 — the mode lever: one register, two directions -->
+  <section class="bay bay-mode" id="mode" aria-label="MODE">
+    <fieldset class="mode-field">
+      <legend class="legend">MODE</legend>
+      <div class="mode-lever">
+        <input class="mode-radio" type="radio" name="mode" id="mode-broadcast" checked value="BROADCAST">
+        <label class="key mode-key" for="mode-broadcast"><span class="mode-name">BROADCAST</span></label>
+        <input class="mode-radio" type="radio" name="mode" id="mode-receive" value="RECEIVE">
+        <label class="key mode-key" for="mode-receive"><span class="mode-name">RECEIVE</span></label>
+      </div>
+      <p class="mode-hint">One register, two directions. Speak, or listen.</p>
+    </fieldset>
+  </section>
+
   <main class="deck">
 
     <!-- The composer -->
@@ -73,7 +87,7 @@
             <span class="head-slot"></span>
             <span class="head-lamp"></span>
           </div>
-          <ol class="tape-strip">
+          <ol class="tape-strip" data-tape="send">
             <li class="tg" data-g="1" style="left:44px;width:86px"><span class="tg-char">H</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
             <li class="tg" data-g="2" style="left:156px;width:14px"><span class="tg-char">E</span><span class="tg-marks"><span class="tp tp-dot"></span></span></li>
             <li class="tg" data-g="3" style="left:196px;width:114px"><span class="tg-char">L</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
@@ -87,6 +101,19 @@
             <li class="tg" data-g="11" style="left:1296px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
             <li class="tg" data-g="12" style="left:1468px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
             <li class="tg" data-g="13" style="left:1640px;width:94px"><span class="tg-char">M</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+          </ol>
+          <!-- Run 2 — the received record: light punches this tape. Static
+               snapshot of a partial "DARK ROOM" heard mid-message (spoken
+               ink; the live group rings amber). I2 renders this live. -->
+          <ol class="tape-strip tape-rx" data-tape="receive" aria-hidden="true">
+            <li class="tg tg-spoken" data-g="r1" style="left:44px;width:90px"><span class="tg-char">D</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg tg-spoken" data-g="r2" style="left:160px;width:66px"><span class="tg-char">A</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg tg-spoken" data-g="r3" style="left:252px;width:90px"><span class="tg-char">R</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg tg-spoken" data-g="r4" style="left:368px;width:118px"><span class="tg-char">K</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dot"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg tg-spoken" data-g="r5" style="left:544px;width:90px"><span class="tg-char">R</span><span class="tg-marks"><span class="tp tp-dot"></span><span class="tp tp-dash"></span><span class="tp tp-dot"></span></span></li>
+            <li class="tg tg-spoken" data-g="r6" style="left:660px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg tg-spoken" data-g="r7" style="left:832px;width:146px"><span class="tg-char">O</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
+            <li class="tg tg-live" data-g="r8" style="left:1004px;width:94px"><span class="tg-char">M</span><span class="tg-marks"><span class="tp tp-dash"></span><span class="tp tp-dash"></span></span></li>
           </ol>
         </div>
       </div>
@@ -108,6 +135,16 @@
         <p class="status-line" data-state-line="paused-on-screen"><span class="status-legend">PAUSED</span> <span class="status-copy">HELD AT POSITION. SCREEN HOLDS THE LIGHT.</span></p>
         <p class="status-line" data-state-line="done"><span class="status-legend">DONE</span> <span class="status-copy">THE RUN IS OVER. THE TAPE KEEPS THE MESSAGE.</span></p>
         <p class="status-line" data-state-line="error"><span class="status-legend">FAULT</span> <span class="status-copy">A FAULT STOPPED THE RUN. THE MESSAGE SURVIVES.</span></p>
+        <!-- Run 2 — the receive lines (shown only in receive mode). -->
+        <p class="status-line" data-receive-line="receive-idle"><span class="status-legend">AT REST</span> <span class="status-copy">THE REGISTER LISTENS FOR NOTHING YET.</span></p>
+        <p class="status-line" data-receive-line="receive-preflight"><span class="status-legend">PREFLIGHT</span> <span class="status-copy">THE GATE BEFORE THE EYE OPENS.</span></p>
+        <p class="status-line" data-receive-line="receive-arming"><span class="status-legend">OPENING THE EYE</span> <span class="status-copy">THE CAMERA QUESTION IS WITH THE BROWSER.</span></p>
+        <p class="status-line" data-receive-line="receive-denied"><span class="status-legend">PERMISSION DENIED</span> <span class="status-copy">CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.</span></p>
+        <p class="status-line" data-receive-line="receive-unsupported"><span class="status-legend">NO EYE</span> <span class="status-copy">THIS CONTEXT OFFERS NO CAMERA. THE BROADCAST HALF STILL SPEAKS.</span></p>
+        <p class="status-line" data-receive-line="receive-armed"><span class="status-legend">LISTENING</span> <span class="status-copy">THE EYE IS OPEN. AIM AT THE LIGHT.</span></p>
+        <p class="status-line" data-receive-line="receive-active"><span class="status-legend">RECEIVING</span> <span class="status-copy">LIGHT SPEAKS. THE TAPE PUNCHES WHAT IT HEARS.</span></p>
+        <p class="status-line" data-receive-line="receive-done"><span class="status-legend">HEARD</span> <span class="status-copy">THE MESSAGE STANDS ON THE TAPE.</span></p>
+        <p class="status-line" data-receive-line="receive-error"><span class="status-legend">FAULT</span> <span class="status-copy">THE EYE FAILED. THE RECORD STANDS.</span></p>
       <!-- The station announces STATES (a line becoming visible under the
            head, read atomically with the current progress position), never
            a per-mark ledger: each progress line rewrites its text every
@@ -123,6 +160,29 @@
       <p class="status-progress" data-state-progress="error" aria-live="off">MARK 6 OF 38</p>
       </div>
       <p class="takeover-note" data-state-note="broadcasting-on-screen">LIGHT SOURCE LOST — CONTINUING ON SCREEN. POSITION KEPT. THE MESSAGE LOSES NOTHING.</p>
+    </section>
+
+    <!-- Run 2 — the eye: the aperture (live preview, small by photosafety
+         law) and the hearing meter (the textual truth — receiving never
+         requires watching the picture). -->
+    <section class="bay bay-eye" id="eye" aria-label="THE EYE AND THE HEARING METER">
+      <div class="aperture" data-rx-camera="off">
+        <video id="preview" class="aperture-video" muted playsinline></video>
+        <span class="aperture-shutter" aria-hidden="true"></span>
+      </div>
+      <div class="meter">
+        <p class="meter-line" data-meter-line="silence">HEARING NOTHING</p>
+        <p class="meter-line" data-meter-line="noise">LIGHT, BUT NOT MORSE</p>
+        <p class="meter-line" data-meter-line="decoding">HEARING LIGHT</p>
+        <p class="meter-hint" data-meter-hint="silence">Aim at the sender. Get closer. Dim the room.</p>
+        <p class="meter-hint" data-meter-hint="noise">Step back from the light, or block the stray glare.</p>
+        <p class="meter-saturated" data-meter-saturated hidden>THE PICTURE IS BLOWN OUT. MOVE BACK FROM THE LIGHT.</p>
+        <p class="meter-partial" data-meter-partial hidden>PARTIAL — LISTENING BEGAN MID-MESSAGE.</p>
+        <!-- Decoded words announce here, politely, one word at a time
+             (letters settle visually without chatter — the refinement-#2
+             law). Markup-scoped live-region config, JS writes text only. -->
+        <p class="sr-live" aria-live="polite"></p>
+      </div>
     </section>
 
     <!-- Standby / caution / GO choreography zones -->
@@ -202,6 +262,32 @@
       <p class="screen-line">THE SCREEN IS THE LAMP. HOLD IT UP FACING THE ROOM.</p>
     </aside>
 
+    <!-- Run 2 — the receive why-camera plate (before the prompt) -->
+    <aside class="bay gate-plate" id="why-camera-receive" aria-label="WHY THE CAMERA PROMPT">
+      <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
+      <ul class="why-lines">
+        <li>The register listens through the camera.</li>
+        <li>It watches light levels in a live view.</li>
+        <li>Nothing is recorded. Nothing is sent anywhere.</li>
+        <li>The eye closes the moment you stop.</li>
+      </ul>
+      <div class="keys">
+        <button class="key key-primary" type="button" data-action="begin-listening">BEGIN LISTENING</button>
+        <button class="key" type="button" data-action="cancel">NOT NOW</button>
+      </div>
+    </aside>
+
+    <!-- Run 2 — receive permission denied: retry, never a dead end -->
+    <aside class="bay gate-plate" id="receive-denied" aria-label="PERMISSION DENIED">
+      <h2 class="gate-title">PERMISSION DENIED</h2>
+      <p class="denied-line">CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.</p>
+      <p class="denied-hint">Regrant camera access in the browser site settings, then listen again.</p>
+      <div class="keys">
+        <button class="key key-primary" type="button" data-action="retry-receive">RETRY LISTENING</button>
+        <button class="key" type="button" data-action="reset">BACK TO REST</button>
+      </div>
+    </aside>
+
     <!-- Transport keys -->
     <section class="bay" id="transport">
       <div class="keys keys-cold">
@@ -236,6 +322,15 @@
         <button class="key" type="button" data-action="reset">RESET</button>
       </div>
       <p class="error-recover">THE MESSAGE SURVIVES. REPLAY, RETRY, OR RESET.</p>
+      <!-- Run 2 — receive transport -->
+      <div class="keys keys-receive-live">
+        <button class="key key-stop" type="button" data-action="stop-listening">STOP LISTENING</button>
+      </div>
+      <div class="keys keys-receive-done">
+        <button class="key key-primary" type="button" data-action="copy-message">COPY MESSAGE</button>
+        <button class="key" type="button" data-action="listen-again">LISTEN AGAIN</button>
+      </div>
+      <p class="receive-done-offer" data-receive-done-note>THE MESSAGE STANDS ON THE TAPE.</p>
     </section>
 
     <!-- Named speed steps -->

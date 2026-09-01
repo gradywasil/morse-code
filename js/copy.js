@@ -64,7 +64,11 @@ import {
   flashGuard,
 } from './schedule.js';
 import { TORCH_FALLBACK_REASONS } from './torch.js';
-import { STATES, ARM_FRAMINGS } from './states.js';
+import { STATES, ARM_FRAMINGS, RECEIVE_STATES } from './states.js';
+import { METER, SILENCE_AUTO_COMPLETE_MS } from './receive-session.js';
+
+/** Auto-complete silence in whole seconds, derived — never re-typed. */
+const AUTO_COMPLETE_SECONDS = Math.round(SILENCE_AUTO_COMPLETE_MS / 1000);
 
 // ---------------------------------------------------------------------------
 // Derived values (single source of truth: js/schedule.js). R2-committed:
@@ -331,6 +335,90 @@ export const COPY = deepFreeze({
     loaded: 'MESSAGE AND SPEED LOADED FROM THE LINK.',
     unreadable: 'THE LINK WAS UNREADABLE. EMPTY TAPE, SAFE SPEED.',
   },
+
+  // Run 2 — the receiver (The Register Listens) --------------------------------------------
+  receive: {
+    // The mode lever.
+    mode: {
+      broadcast: 'BROADCAST',
+      receive: 'RECEIVE',
+      hint: 'One register, two directions. Speak, or listen.',
+    },
+
+    // The receive why-camera plate (BEFORE the prompt — the plate grammar
+    // mirrors the broadcast explainer).
+    whyCamera: {
+      title: 'WHY THE CAMERA PROMPT',
+      lines: [
+        'The register listens through the camera.',
+        'It watches light levels in a live view.',
+        'Nothing is recorded. Nothing is sent anywhere.',
+        'The eye closes the moment you stop.',
+      ],
+      proceed: 'BEGIN LISTENING',
+    },
+
+    // Per-state plate copy — ALL receive states (keys are RECEIVE_STATES).
+    states: {
+      [RECEIVE_STATES.IDLE]: {
+        legend: 'AT REST',
+        line: 'THE REGISTER LISTENS FOR NOTHING YET.',
+      },
+      [RECEIVE_STATES.PREFLIGHT]: {
+        legend: 'PREFLIGHT',
+        line: 'THE GATE BEFORE THE EYE OPENS.',
+      },
+      [RECEIVE_STATES.ARMING]: {
+        legend: 'OPENING THE EYE',
+        line: 'THE CAMERA QUESTION IS WITH THE BROWSER.',
+      },
+      [RECEIVE_STATES.DENIED]: {
+        legend: 'PERMISSION DENIED',
+        line: 'CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.',
+      },
+      [RECEIVE_STATES.UNSUPPORTED]: {
+        legend: 'NO EYE',
+        line: 'THIS CONTEXT OFFERS NO CAMERA. THE BROADCAST HALF STILL SPEAKS.',
+      },
+      [RECEIVE_STATES.ARMED]: {
+        legend: 'LISTENING',
+        line: 'THE EYE IS OPEN. AIM AT THE LIGHT.',
+      },
+      [RECEIVE_STATES.ACTIVE]: {
+        legend: 'RECEIVING',
+        line: 'LIGHT SPEAKS. THE TAPE PUNCHES WHAT IT HEARS.',
+      },
+      [RECEIVE_STATES.DONE]: {
+        legend: 'HEARD',
+        line: 'THE MESSAGE STANDS ON THE TAPE.',
+      },
+      [RECEIVE_STATES.ERROR]: {
+        legend: 'FAULT',
+        line: 'THE EYE FAILED. THE RECORD STANDS.',
+      },
+    },
+
+    // The hearing meter (F3 METER values are the keys).
+    meter: {
+      [METER.SILENCE]: 'HEARING NOTHING',
+      [METER.NOISE]: 'LIGHT, BUT NOT MORSE',
+      [METER.DECODING]: 'HEARING LIGHT',
+    },
+    meterHints: {
+      [METER.SILENCE]: 'Aim at the sender. Get closer. Dim the room.',
+      [METER.NOISE]: 'Step back from the light, or block the stray glare.',
+    },
+    saturated: 'THE PICTURE IS BLOWN OUT. MOVE BACK FROM THE LIGHT.',
+    partialNote: 'PARTIAL — LISTENING BEGAN MID-MESSAGE.',
+    donePartial: 'THE RECORD IS PARTIAL. LISTENING BEGAN MID-MESSAGE.',
+    quietClosed: `QUIET FOR ${AUTO_COMPLETE_SECONDS} SECONDS. THE MESSAGE CLOSED ITSELF.`,
+
+    // Transport.
+    stop: 'STOP LISTENING',
+    copyMessage: 'COPY MESSAGE',
+    copied: 'MESSAGE COPIED TO THE CLIPBOARD',
+    copyFailed: 'COPY REFUSED. READ THE TAPE BY HAND.',
+  },
 });
 
 // ---------------------------------------------------------------------------
@@ -387,6 +475,17 @@ export function unknownCharsLine(chars) {
  */
 export function fallbackLine(reason) {
   return COPY.fallback[reason] ?? COPY.fallback.generic;
+}
+
+
+/**
+ * Meter line for a receive meter value; unknown meters get silence (a
+ * future meter must never render as undefined).
+ * @param {string} meter a METER value (or anything)
+ * @returns {string}
+ */
+export function meterLine(meter) {
+  return COPY.receive.meter[meter] ?? COPY.receive.meter[METER.SILENCE];
 }
 
 // Internal ------------------------------------------------------------------

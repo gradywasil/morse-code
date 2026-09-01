@@ -345,3 +345,54 @@ test('source hygiene: copy.js is data-only — no DOM tokens outside comments', 
     assert.ok(!stripped.includes(token), `DOM/timer token "${token}" present in code`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Run 2 — the receive copy pack (U1).
+
+import { RECEIVE_STATE_LIST } from '../js/states.js';
+import { METER, SILENCE_AUTO_COMPLETE_MS } from '../js/receive-session.js';
+import { meterLine } from '../js/copy.js';
+
+test('U1: receive copy covers every receive state (a new state cannot ship copyless)', () => {
+  const keys = Object.keys(COPY.receive.states).sort();
+  assert.deepEqual(keys, [...RECEIVE_STATE_LIST].sort());
+  for (const state of RECEIVE_STATE_LIST) {
+    const plate = COPY.receive.states[state];
+    assert.equal(typeof plate.legend, 'string', `${state} legend`);
+    assert.equal(typeof plate.line, 'string', `${state} line`);
+    assert.ok(plate.legend.length > 0 && plate.line.length > 0);
+  }
+});
+
+test('U1: meter copy covers every METER value; meterLine falls back safely', () => {
+  assert.deepEqual(Object.keys(COPY.receive.meter).sort(), Object.values(METER).sort());
+  for (const meter of Object.values(METER)) {
+    assert.equal(typeof COPY.receive.meter[meter], 'string');
+  }
+  assert.equal(meterLine(METER.DECODING), 'HEARING LIGHT');
+  assert.equal(meterLine('nonsense'), COPY.receive.meter[METER.SILENCE]);
+});
+
+test('U1: the auto-complete number is derived from the session constant', () => {
+  const seconds = Math.round(SILENCE_AUTO_COMPLETE_MS / 1000);
+  assert.ok(COPY.receive.quietClosed.includes(`FOR ${seconds} SECONDS`));
+  assert.equal(seconds, 5);
+});
+
+test('U1: register voice holds over the receive pack (no exclamations, ≤120, no apology)', () => {
+  const strings = [];
+  (function walk(node) {
+    if (typeof node === 'string') strings.push(node);
+    else if (node && typeof node === 'object') for (const v of Object.values(node)) walk(v);
+  })(COPY.receive);
+  assert.ok(strings.length >= 30, `expected a full pack, got ${strings.length}`);
+  for (const s of strings) {
+    assert.ok(!s.includes('!'), `no exclamation marks: "${s}"`);
+    assert.ok(s.length <= 120, `≤120 chars: "${s}"`);
+    assert.ok(!/sorr|apolog|just a|merely/i.test(s), `no apology tokens: "${s}"`);
+  }
+  // Honesty facts present and verbatim.
+  const why = COPY.receive.whyCamera.lines.join(' ');
+  assert.ok(why.includes('Nothing is recorded. Nothing is sent anywhere.'));
+  assert.ok(why.includes('The eye closes the moment you stop.'));
+});

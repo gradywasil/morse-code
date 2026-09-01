@@ -786,3 +786,418 @@ buildTape(messageInput.value);
 renderComposerNotes();
 updateToneLabels();
 render(machine.snapshot());
+
+// ---------------------------------------------------------------------------
+// RUN 2 — THE REGISTER LISTENS (I2 + S2, docs/ultron/run2-receiver/plan.md)
+//
+// The receive half: mode lever, watcher→session→tape pipeline, honest
+// meters, COPY, and the camera discipline (opened in a gesture, closed on
+// stop/mode-switch/background). The broadcast journey above is untouched
+// except where explicitly guarded by mode checks.
+// ---------------------------------------------------------------------------
+
+import { createWatcher } from './watcher.js';
+import {
+  RECEIVE_STATES, RECEIVE_EVENTS, RECEIVE_EFFECTS, createReceiveMachine,
+} from './states.js';
+import { createReceiveSession, METER } from './receive-session.js';
+import { meterLine } from './copy.js';
+
+const RX = COPY.receive;
+
+// -- receive DOM -------------------------------------------------------------
+const previewVideo = $('#preview');
+const aperture = $('.aperture');
+const modeRadios = Array.from(document.querySelectorAll('input[name="mode"]'));
+const meterSaturationNote = $('.meter-saturated');
+const meterPartialNote = $('.meter-partial');
+const receiveDoneNote = $('[data-receive-done-note]');
+const rxStrip = $('.tape-rx');
+const rxAnnounce = $('.meter .sr-live'); // markup-scoped live-region config
+
+// -- receive state -----------------------------------------------------------
+let mode = 'broadcast';
+const rxMachine = createReceiveMachine();
+let watcher = null;
+let rxSession = null;
+let rxCompletedText = '';
+let rxLastWord = '';
+
+// Receive states where the mode lever freezes (a committed listen).
+const RX_FROZEN_STATES = new Set([
+  RECEIVE_STATES.ARMING, RECEIVE_STATES.ARMED, RECEIVE_STATES.ACTIVE,
+]);
+
+// -- receive tape rendering (I1's static strip becomes live) ------------------
+
+const RX_PUNCH = Object.freeze({ dot: 14, dash: 42, gap: 10, letter: 26, word: 58, start: 44 });
+
+let rxLiveEl = null;      // the growing group's <li>
+let rxLiveMarks = 0;
+let rxLiveWidth = 0;
+let rxCursor = RX_PUNCH.start; // next group's left, in strip px
+
+function rxResetTapeDom() {
+  rxWinWidth = 0;
+  rxStrip.innerHTML = '';
+  rxStrip.style.removeProperty('--strip-shift');
+  rxLiveEl = null;
+  rxLiveMarks = 0;
+  rxLiveWidth = 0;
+  rxCursor = RX_PUNCH.start;
+}
+
+let rxWinWidth = 0; // cached at letter boundaries — a layout read per
+                    // MARK would stall edge timing mid-stream (I3 lesson)
+
+function rxUpdateShift() {
+  // Keep the growing record's edge under the read-head bridge (the
+  // broadcast traverse, receive way). Information parity: the shift is a
+  // transform — it still applies, instantly, under the capability layers.
+  const shift = Math.max(0, rxCursor - rxWinWidth + RX_PUNCH.start + 60);
+  rxStrip.style.setProperty('--strip-shift', `${-shift}px`);
+}
+
+function rxEnsureLiveGroup() {
+  if (rxLiveEl !== null) return rxLiveEl;
+  const li = document.createElement('li');
+  li.className = 'tg tg-new tg-live';
+  li.style.left = `${rxCursor}px`;
+  li.style.width = `${RX_PUNCH.dot}px`;
+  const ch = document.createElement('span');
+  ch.className = 'tg-char';
+  const marks = document.createElement('span');
+  marks.className = 'tg-marks';
+  li.append(ch, marks);
+  rxStrip.appendChild(li);
+  rxLiveMarks = 0;
+  rxLiveWidth = 0;
+  return (rxLiveEl = li);
+}
+
+function rxAppendMark(mark) {
+  const el = rxEnsureLiveGroup();
+  if (rxLiveMarks > 0) rxLiveWidth += RX_PUNCH.gap;
+  rxLiveWidth += mark === 'dash' ? RX_PUNCH.dash : RX_PUNCH.dot;
+  el.style.width = `${rxLiveWidth}px`;
+  const punch = document.createElement('span');
+  punch.className = `tp tp-${mark} tp-new`; // the die press (I3)
+  el.querySelector('.tg-marks').appendChild(punch);
+  rxLiveMarks += 1;
+  rxUpdateShift();
+}
+
+function rxCompleteLetter(event) {
+  rxWinWidth = rxStrip.parentElement.clientWidth || 1; // letter boundary
+  if (rxLiveEl === null) {
+    // Sequence-independent rendering: replayed letters (the lock-time
+    // recovery and the forced bootstrap) arrive with their marks in the
+    // event, not in a live group — punch a completed group directly.
+    rxRenderCompletedGroup(event);
+    rxUpdateShift();
+    return;
+  }
+  const el = rxLiveEl;
+  if (event.known === false) {
+    el.className = 'tg tg-void'; // the honest void group
+    el.querySelector('.tg-char').textContent = '';
+  } else {
+    el.className = 'tg tg-spoken';
+    el.querySelector('.tg-char').textContent = event.char;
+  }
+  rxCursor += rxLiveWidth + RX_PUNCH.letter;
+  rxLiveEl = null;
+  rxUpdateShift();
+}
+
+function rxRenderCompletedGroup(event) {
+  const marks = Array.isArray(event.marks) ? event.marks : [];
+  let width = 0;
+  for (let i = 0; i < marks.length; i++) {
+    width += marks[i] === 'dash' ? RX_PUNCH.dash : RX_PUNCH.dot;
+    if (i < marks.length - 1) width += RX_PUNCH.gap;
+  }
+  if (width === 0) width = RX_PUNCH.dot; // a void keeps a minimal group
+  const li = document.createElement('li');
+  li.className = event.known === false ? 'tg tg-void' : 'tg tg-spoken';
+  li.style.left = `${rxCursor}px`;
+  li.style.width = `${width}px`;
+  const ch = document.createElement('span');
+  ch.className = 'tg-char';
+  ch.textContent = event.known === true ? event.char : '';
+  const markRow = document.createElement('span');
+  markRow.className = 'tg-marks';
+  for (const m of marks) {
+    const punch = document.createElement('span');
+    punch.className = `tp tp-${m}`;
+    markRow.appendChild(punch);
+  }
+  li.append(ch, markRow);
+  rxStrip.appendChild(li);
+  rxCursor += width + RX_PUNCH.letter;
+}
+
+function rxAppendWord() {
+  // A word gap is spacing, not an element (the tape's word grammar).
+  rxCursor += RX_PUNCH.word - RX_PUNCH.letter;
+  rxUpdateShift();
+}
+
+// -- announcements (per-word polite; letters settle silently) ------------------
+
+function announceRxBurst(text) {
+  // Letters accumulate silently; a completed WORD announces once (the
+  // refinement-#2 law: no per-letter chatter). Timers are wrong here —
+  // at LEARNER a letter every ~2 s would flush each letter alone.
+  rxLastWord += text;
+}
+
+function announceRxWord() {
+  const word = rxLastWord.trim();
+  rxLastWord = '';
+  if (word) {
+    rxAnnounce.textContent = '';
+    rxAnnounce.textContent = `${word}`;
+  }
+}
+
+// -- watcher → session plumbing ------------------------------------------------
+
+function beginListen() {
+  // Inside the user's gesture (the click that dispatched ACK).
+  if (watcher === null) {
+    watcher = createWatcher({ video: previewVideo });
+    watcher.addEventListener('edge', onWatcherEdge);
+    watcher.addEventListener('stats', onWatcherStats);
+    watcher.addEventListener('lost', () => {
+      rxMachine.dispatch(RECEIVE_EVENTS.CAMERA_LOST, { reason: 'ended' });
+    });
+  }
+  watcher.acquire().then((result) => {
+    if (result.ok) {
+      rxMachine.dispatch(RECEIVE_EVENTS.WATCHER_GRANTED);
+      // rxSession is created lazily at the FIRST edge, where the D8
+      // mid-join truth is actually observable: a first OFF edge means
+      // the light was already on when listening began.
+    } else if (result.outcome === 'permission-denied') {
+      rxMachine.dispatch(RECEIVE_EVENTS.WATCHER_DENIED, { outcome: result.outcome });
+    } else {
+      rxMachine.dispatch(RECEIVE_EVENTS.WATCHER_FAILED, { outcome: result.outcome });
+    }
+  });
+}
+
+let rxLightOnTMs = null;  // timestamp of the last ON edge (open mark)
+let rxLightOffTMs = null; // timestamp of the last OFF edge (open gap)
+
+function onWatcherEdge(edge) {
+  if (rxSession === null) {
+    // D8 at the only place it is observable: a first OFF edge means the
+    // light was already on when listening began (mid-mark join).
+    rxSession = createReceiveSession({
+      lightOnAtBegin: !edge.on,
+      onEvent: onSessionEvent,
+    });
+  }
+  if (edge.on) {
+    if (rxLightOffTMs !== null) {
+      rxSession.feedGap(edge.tMs - rxLightOffTMs, edge.tMs);
+    }
+    rxLightOnTMs = edge.tMs;
+  } else {
+    if (rxLightOnTMs !== null) {
+      rxSession.feedMark(edge.tMs - rxLightOnTMs, edge.tMs);
+    }
+    rxLightOffTMs = edge.tMs;
+  }
+}
+
+function onWatcherStats(stats) {
+  if (rxSession !== null) rxSession.noteFrame(stats.tMs);
+  if (meterSaturationNote !== null) {
+    meterSaturationNote.hidden = !stats.saturated;
+  }
+}
+
+function onSessionEvent(event) {
+  switch (event.type) {
+    case 'mark':
+      if (rxMachine.state === RECEIVE_STATES.ARMED) {
+        rxMachine.dispatch(RECEIVE_EVENTS.HEARING); // light speaks → active
+      }
+      firePulse(); // the read-head lamp fires per heard flash (I3)
+      rxAppendMark(event.mark);
+      break;
+    case 'letter':
+      rxCompleteLetter(event);
+      announceRxBurst(event.known ? event.char : '');
+      break;
+    case 'word':
+      rxAppendWord();
+      announceRxWord();
+      break;
+    case 'meter':
+      renderRx();
+      break;
+    case 'partial':
+      if (meterPartialNote !== null) meterPartialNote.hidden = false;
+      break;
+    case 'complete':
+      rxCompletedText = event.text;
+      if (event.source === 'silence') {
+        rxMachine.dispatch(RECEIVE_EVENTS.AUTO_COMPLETE, { partial: event.partial });
+      } else {
+        rxMachine.dispatch(RECEIVE_EVENTS.STOP);
+      }
+      announceRxWord(); // the trailing word, if the sender never paused
+      rxAnnounce.textContent = '';
+      rxAnnounce.textContent = event.text
+        ? `${event.text}.`
+        : RX.quietClosed;
+      break;
+    default:
+      break;
+  }
+}
+
+// -- receive render -------------------------------------------------------------
+
+function renderRx() {
+  const state = rxMachine.state;
+  body.dataset.state = state;
+  if (state !== RECEIVE_STATES.ARMED && state !== RECEIVE_STATES.ACTIVE) {
+    clearFire(); // the lamp fires only while light speaks
+  }
+  const sessionStatus = rxSession !== null ? rxSession.status() : null;
+  const meter = sessionStatus !== null && sessionStatus.locked
+    ? METER.DECODING
+    : (sessionStatus !== null ? sessionStatus.meter : METER.SILENCE);
+  body.dataset.meter = meter;
+  const cameraOn = state === RECEIVE_STATES.ARMED || state === RECEIVE_STATES.ACTIVE;
+  if (aperture !== null) aperture.dataset.rxCamera = cameraOn ? 'on' : 'off';
+  if (state === RECEIVE_STATES.DONE) {
+    const snap = rxMachine.snapshot();
+    receiveDoneNote.textContent = snap.donePartial
+      ? RX.donePartial
+      : (snap.doneSource === 'silence' ? RX.quietClosed : RX.states[RECEIVE_STATES.DONE].line);
+  }
+  freezeModeLever();
+}
+
+// -- the mode lever (S2) ---------------------------------------------------------
+
+function freezeModeLever() {
+  // Frozen through any committed run of EITHER mode (v1 speed-freeze
+  // grammar: disable pass + belt-and-suspenders restore in the handler).
+  const txCommitted = mode === 'broadcast'
+    && FROZEN_STATES.has(machine.state());
+  const rxCommitted = mode === 'receive' && RX_FROZEN_STATES.has(rxMachine.state);
+  for (const radio of modeRadios) radio.disabled = txCommitted || rxCommitted;
+}
+
+for (const radio of modeRadios) {
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    const nextMode = radio.value.toLowerCase(); // radio values are uppercase
+    if (nextMode === mode) return;
+    // Guard: a committed run refuses the switch and restores the lever.
+    if ((mode === 'broadcast' && FROZEN_STATES.has(machine.state()))
+        || (mode === 'receive' && RX_FROZEN_STATES.has(rxMachine.state))) {
+      for (const r of modeRadios) r.checked = r.value.toLowerCase() === mode;
+      return;
+    }
+    if (mode === 'receive') {
+      // Leaving receive: finalize + release the camera. No auto-restart.
+      if (rxMachine.state === RECEIVE_STATES.ARMED || rxMachine.state === RECEIVE_STATES.ACTIVE) {
+        if (rxSession !== null) rxSession.stop(); // emits complete → STOP row
+        rxMachine.dispatch(RECEIVE_EVENTS.STOP);
+      } else {
+        rxMachine.dispatch(RECEIVE_EVENTS.RESET);
+      }
+      stopWatcher();
+    }
+    mode = nextMode;
+    body.dataset.mode = mode;
+    if (mode === 'receive') {
+      // Entering receive never touches the broadcast machine or the hash.
+      rxMachine.dispatch(RECEIVE_EVENTS.RESET);
+      resetRxSurface();
+      // The lever turn IS the listening request: the why-camera plate
+      // greets the mode (the entry gesture).
+      rxMachine.dispatch(RECEIVE_EVENTS.REQUEST_RECEIVE);
+      renderRx();
+    } else {
+      render(machine.snapshot()); // the broadcast surface re-renders
+    }
+  });
+}
+
+function resetRxSurface() {
+  rxCompletedText = '';
+  rxLastWord = '';
+  rxSession = null;
+  rxResetTapeDom();
+  rxLightOnTMs = null;
+  rxLightOffTMs = null;
+  if (meterPartialNote !== null) meterPartialNote.hidden = true;
+  if (meterSaturationNote !== null) meterSaturationNote.hidden = true;
+  rxAnnounce.textContent = '';
+}
+
+function stopWatcher() {
+  if (watcher !== null) watcher.stop(); // release-torch's receive twin
+  rxLightOnTMs = null;
+  rxLightOffTMs = null;
+}
+
+// Machine effects: the host performs what the table asks.
+rxMachine.addEventListener('change', renderRx);
+rxMachine.addEventListener(RECEIVE_EFFECTS.RELEASE_CAMERA, () => {
+  stopWatcher();
+});
+
+// Backgrounding while listening finalizes what was heard and closes the eye
+// (the receive twin of the conductor's visibilitychange pause).
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && mode === 'receive') {
+    const state = rxMachine.state;
+    if (state === RECEIVE_STATES.ARMED || state === RECEIVE_STATES.ACTIVE) {
+      if (rxSession !== null) rxSession.stop();
+      rxMachine.dispatch(RECEIVE_EVENTS.STOP);
+    }
+  }
+});
+
+// -- receive gestures ------------------------------------------------------------
+
+ACTIONS['begin-listening'] = () => {
+  if (rxMachine.dispatch(RECEIVE_EVENTS.ACK).accepted) beginListen(); // in-gesture
+};
+ACTIONS['retry-receive'] = () => {
+  if (rxMachine.dispatch(RECEIVE_EVENTS.RETRY_ARM).accepted) beginListen();
+};
+ACTIONS['stop-listening'] = () => {
+  if (rxSession !== null) rxSession.stop();
+  rxMachine.dispatch(RECEIVE_EVENTS.STOP);
+};
+ACTIONS['listen-again'] = () => {
+  rxMachine.dispatch(RECEIVE_EVENTS.RESET);
+  resetRxSurface();
+  rxMachine.dispatch(RECEIVE_EVENTS.REQUEST_RECEIVE);
+  renderRx();
+};
+ACTIONS['copy-message'] = () => {
+  const text = rxCompletedText || sessionTextNow();
+  copyText(text).then(
+    () => { receiveDoneNote.textContent = RX.copied; },
+    () => { receiveDoneNote.textContent = RX.copyFailed; }
+  );
+};
+
+function sessionTextNow() {
+  return rxSession !== null ? rxSession.status().text : '';
+}
+
+// Boot: the receive machine parks at its own idle; the lever turns it on.
+body.dataset.mode = mode;
+freezeModeLever();

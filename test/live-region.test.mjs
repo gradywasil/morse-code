@@ -37,13 +37,18 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const html = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const app = readFileSync(path.join(ROOT, 'js/app.js'), 'utf8');
 
-test('T-refine-2: the station is the page\'s only live region, polite', () => {
+test('T-refine-2 + run 2: two scoped live regions — the station (states) and the receive word announcer', () => {
   const liveRegions = [...html.matchAll(/aria-live="[^"]*"/g)].map((m) => m[0]);
-  assert.equal(liveRegions.filter((a) => a !== 'aria-live="off"').length, 1,
-    'exactly one announcing live region (the station)');
-  assert.ok(liveRegions.includes('aria-live="polite"'), 'the station is polite');
+  // Run 2 adds exactly one announcing region beyond the v1 station: the
+  // sr-live word announcer (receive mode, per-word polite cadence).
+  assert.equal(liveRegions.filter((a) => a !== 'aria-live="off"').length, 2,
+    'exactly two announcing live regions (station + word announcer)');
+  assert.equal((html.match(/aria-live="polite"/g) || []).length, 2,
+    'both announcing regions are polite');
   assert.match(html, /class="station-status" role="status" aria-live="polite"/,
     'the station keeps role="status" + polite (DESIGN.md: aria-live polite)');
+  assert.match(html, /class="sr-live" aria-live="polite"><\/p>/,
+    'the word announcer is the empty markup-scoped sr-live paragraph');
   assert.equal((html.match(/role="status"/g) || []).length, 1,
     'no other role="status" exists');
   assert.equal((html.match(/role="alert"/g) || []).length, 0,
@@ -64,7 +69,9 @@ test('T-refine-2: every progress line is scoped out of the announcements', () =>
 
 test('T-refine-2: state lines carry no aria-live of their own', () => {
   const lines = [...html.matchAll(/<p class="status-line"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(lines.length, 15, 'the fifteen machine-state lines');
+  // 15 broadcast lines + 9 receive lines (run 2) — all inherit the
+  // station's polite channel; none may override it.
+  assert.equal(lines.length, 24, 'the machine-state lines (15 broadcast + 9 receive)');
   for (const line of lines) {
     assert.ok(!line.includes('aria-live'),
       'a state line must inherit the container\'s polite channel, not override it');

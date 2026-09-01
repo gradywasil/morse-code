@@ -1059,3 +1059,250 @@ function inspect(value) {
     return String(value);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Run 2 — the receive machine (S1, docs/ultron/run2-receiver/plan.md).
+//
+// A parallel machine for the REGISTER LISTENS half, sharing this module's
+// discipline exactly: frozen tables, synchronous pure dispatch, soft
+// rejection for known-event-wrong-state ('invalid', nothing changes),
+// TypeError for unknown event names (wiring bug), 'change' + per-row
+// effects emitted after the move. The broadcast machine above is
+// untouched — additive-only section (its table is pinned by the v1
+// suite, which must stay green).
+//
+// Meter truth (silence / noise / decoding) is SESSION data, not machine
+// state — it rides inside receive-armed/receive-active as high-frequency
+// meter events from F3; the machine owns the journey, not the signal.
+//
+//   receive-idle      the mode is on, nothing requested
+//   receive-preflight the why-camera plate (effect: notice-required)
+//   receive-arming    getUserMedia in flight, inside the user's gesture
+//   receive-denied    permission refused — honest explanation, retry offered
+//   receive-unsupported insecure context / no camera / fatal probe failure
+//   receive-armed     camera live, listening (meter: silence or noise)
+//   receive-active    hearing light and decoding (entered on first HEARING)
+//   receive-done      finalized — complete or partial recorded in context
+//   receive-error     camera lost mid-listen / fatal
+//
+// The camera is released through the 'release-camera' effect on every row
+// that exits a camera-holding state (stop, auto-complete, loss, cancel,
+// reset) — the host performs watcher.stop() there.
+
+/** The receive states (frozen map + list in lifecycle order). */
+export const RECEIVE_STATES = Object.freeze({
+  IDLE: 'receive-idle',
+  PREFLIGHT: 'receive-preflight',
+  ARMING: 'receive-arming',
+  DENIED: 'receive-denied',
+  UNSUPPORTED: 'receive-unsupported',
+  ARMED: 'receive-armed',
+  ACTIVE: 'receive-active',
+  DONE: 'receive-done',
+  ERROR: 'receive-error',
+});
+
+export const RECEIVE_STATE_LIST = Object.freeze([
+  RECEIVE_STATES.IDLE,
+  RECEIVE_STATES.PREFLIGHT,
+  RECEIVE_STATES.ARMING,
+  RECEIVE_STATES.DENIED,
+  RECEIVE_STATES.UNSUPPORTED,
+  RECEIVE_STATES.ARMED,
+  RECEIVE_STATES.ACTIVE,
+  RECEIVE_STATES.DONE,
+  RECEIVE_STATES.ERROR,
+]);
+
+/** Events dispatched into the receive machine. */
+export const RECEIVE_EVENTS = Object.freeze({
+  // user intent
+  REQUEST_RECEIVE: 'request-receive',
+  ACK: 'ack',             // continue past the why-camera plate (the gesture)
+  CANCEL: 'cancel',
+  RETRY_ARM: 'retry-arm',
+  RESET: 'reset',
+  STOP: 'stop',
+  // watcher outcomes (W1)
+  WATCHER_GRANTED: 'watcher-granted',
+  WATCHER_DENIED: 'watcher-denied',
+  WATCHER_FAILED: 'watcher-failed',
+  CAMERA_LOST: 'camera-lost',
+  // session reports (F3)
+  HEARING: 'hearing',
+  AUTO_COMPLETE: 'auto-complete',
+});
+
+/** Effects the receive machine asks the host to perform. */
+export const RECEIVE_EFFECTS = Object.freeze({
+  NOTICE_REQUIRED: 'notice-required',
+  RELEASE_CAMERA: 'release-camera',
+});
+
+export const RECEIVE_TRANSITIONS = Object.freeze({
+  [RECEIVE_STATES.IDLE]: {
+    [RECEIVE_EVENTS.REQUEST_RECEIVE]: {
+      to: RECEIVE_STATES.PREFLIGHT,
+      effects: [RECEIVE_EFFECTS.NOTICE_REQUIRED],
+    },
+  },
+  [RECEIVE_STATES.PREFLIGHT]: {
+    [RECEIVE_EVENTS.ACK]: { to: RECEIVE_STATES.ARMING },
+    [RECEIVE_EVENTS.CANCEL]: { to: RECEIVE_STATES.IDLE },
+    [RECEIVE_EVENTS.RESET]: { to: RECEIVE_STATES.IDLE },
+  },
+  [RECEIVE_STATES.ARMING]: {
+    [RECEIVE_EVENTS.WATCHER_GRANTED]: { to: RECEIVE_STATES.ARMED },
+    [RECEIVE_EVENTS.WATCHER_DENIED]: {
+      to: RECEIVE_STATES.DENIED,
+      apply(ctx, payload) { ctx.outcome = payload?.outcome ?? 'permission-denied'; },
+    },
+    [RECEIVE_EVENTS.WATCHER_FAILED]: {
+      to: RECEIVE_STATES.UNSUPPORTED,
+      apply(ctx, payload) { ctx.outcome = payload?.outcome ?? 'failed'; },
+    },
+    [RECEIVE_EVENTS.CANCEL]: {
+      to: RECEIVE_STATES.IDLE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+    },
+  },
+  [RECEIVE_STATES.DENIED]: {
+    [RECEIVE_EVENTS.RETRY_ARM]: { to: RECEIVE_STATES.ARMING },
+    [RECEIVE_EVENTS.RESET]: { to: RECEIVE_STATES.IDLE },
+  },
+  [RECEIVE_STATES.UNSUPPORTED]: {
+    [RECEIVE_EVENTS.RETRY_ARM]: { to: RECEIVE_STATES.ARMING },
+    [RECEIVE_EVENTS.RESET]: { to: RECEIVE_STATES.IDLE },
+  },
+  [RECEIVE_STATES.ARMED]: {
+    [RECEIVE_EVENTS.RESET]: {
+      to: RECEIVE_STATES.IDLE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+    },
+    [RECEIVE_EVENTS.HEARING]: { to: RECEIVE_STATES.ACTIVE },
+    [RECEIVE_EVENTS.STOP]: {
+      to: RECEIVE_STATES.DONE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+      apply(ctx) { ctx.doneSource = 'stop'; ctx.donePartial = true; },
+    },
+    [RECEIVE_EVENTS.CAMERA_LOST]: {
+      to: RECEIVE_STATES.ERROR,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+      apply(ctx, payload) { ctx.error = { kind: 'camera', reason: payload?.reason ?? 'lost' }; },
+    },
+  },
+  [RECEIVE_STATES.ACTIVE]: {
+    [RECEIVE_EVENTS.RESET]: {
+      to: RECEIVE_STATES.IDLE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+    },
+    [RECEIVE_EVENTS.STOP]: {
+      to: RECEIVE_STATES.DONE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+      apply(ctx) { ctx.doneSource = 'stop'; },
+    },
+    [RECEIVE_EVENTS.AUTO_COMPLETE]: {
+      to: RECEIVE_STATES.DONE,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+      apply(ctx, payload) {
+        ctx.doneSource = 'silence';
+        ctx.donePartial = payload?.partial === true;
+      },
+    },
+    [RECEIVE_EVENTS.CAMERA_LOST]: {
+      to: RECEIVE_STATES.ERROR,
+      effects: [RECEIVE_EFFECTS.RELEASE_CAMERA],
+      apply(ctx, payload) { ctx.error = { kind: 'camera', reason: payload?.reason ?? 'lost' }; },
+    },
+  },
+  [RECEIVE_STATES.DONE]: {
+    [RECEIVE_EVENTS.RESET]: { to: RECEIVE_STATES.IDLE },
+  },
+  [RECEIVE_STATES.ERROR]: {
+    [RECEIVE_EVENTS.RESET]: { to: RECEIVE_STATES.IDLE },
+  },
+});
+
+/**
+ * Create the receive machine. Same contract as createStateMachine():
+ * addEventListener/dispatch, 'change' after the move with a frozen
+ * snapshot, per-row effects as their own events, soft rejection
+ * ({accepted:false}) for known-event-wrong-state, TypeError for unknown
+ * event names.
+ */
+export function createReceiveMachine() {
+  const listeners = new Map();
+  const EVENT_NAMES = new Set(Object.values(RECEIVE_EVENTS));
+  const STATE_NAMES = new Set(Object.values(RECEIVE_STATES));
+  const ctx = {
+    outcome: null,     // denied/unsupported reason (W1 outcome string)
+    doneSource: null,  // 'stop' | 'silence'
+    donePartial: null, // boolean — honest completeness record
+    error: null,       // {kind, reason}
+  };
+  let current = RECEIVE_STATES.IDLE;
+
+  const emit = (type, detail) => {
+    for (const fn of listeners.get(type) ?? []) fn(detail);
+  };
+
+  const snapshot = () => Object.freeze({
+    state: current,
+    outcome: ctx.outcome,
+    doneSource: ctx.doneSource,
+    donePartial: ctx.donePartial,
+    error: ctx.error === null ? null : { ...ctx.error },
+  });
+
+  return {
+    addEventListener(type, fn) {
+      if (!listeners.has(type)) listeners.set(type, new Set());
+      listeners.get(type).add(fn);
+    },
+    removeEventListener(type, fn) {
+      listeners.get(type)?.delete(fn);
+    },
+    get state() { return current; },
+    snapshot,
+    dispatch(type, payload) {
+      if (typeof type !== 'string' || !EVENT_NAMES.has(type)) {
+        throw new TypeError(
+          `receive-states: unknown event ${JSON.stringify(type)} — expected one of ${[...EVENT_NAMES].join(', ')}`
+        );
+      }
+      const row = RECEIVE_TRANSITIONS[current]?.[type] ?? null;
+      if (!row) {
+        emit('invalid', Object.freeze({ state: current, type, reason: 'undefined-transition' }));
+        return Object.freeze({ accepted: false, from: current, to: current, via: type, reason: 'undefined-transition' });
+      }
+      const target = typeof row.to === 'function' ? row.to({ ...ctx }) : row.to;
+      if (!STATE_NAMES.has(target)) {
+        throw new Error(`receive-states: transition table typo — ${current} --${type}--> ${JSON.stringify(target)}`);
+      }
+      const effects = row.effects === undefined ? [] : [...row.effects];
+      if (typeof row.apply === 'function') row.apply(ctx, payload, target);
+      const from = current;
+      current = target;
+      if (current === RECEIVE_STATES.IDLE) {
+        // Phase-scoped context: idle is a clean slate — outcomes, done
+        // records, and errors never leak across lifecycle exits (v1 law).
+        ctx.outcome = null;
+        ctx.doneSource = null;
+        ctx.donePartial = null;
+        ctx.error = null;
+      }
+      emit('change', Object.freeze({
+        from,
+        to: current,
+        via: type,
+        payload: Object.freeze({ ...(payload ?? {}) }),
+        effects: Object.freeze([...effects]),
+        snapshot: snapshot(),
+      }));
+      for (const effect of effects) {
+        emit(effect, Object.freeze({ from, to: current, via: type }));
+      }
+      return Object.freeze({ accepted: true, from, to: current, via: type, effects: Object.freeze([...effects]) });
+    },
+  };
+}

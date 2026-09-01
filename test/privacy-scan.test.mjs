@@ -1,14 +1,13 @@
 // test/privacy-scan.test.mjs — Q2 privacy source-hygiene net.
 //
-// The town-hall privacy criteria are code-level invariants (AC 7: "no video
-// frame APIs invoked anywhere in the codebase") — this suite pins them over
-// ALL shipped sources (every js/*.js + index.html), so a regression cannot
-// ship silently. It generalizes T-F3's single-file torch.js scan to the
-// whole shipped surface, with the fuller token list the T-F3 verifier
-// prescribed for Q2 (bare VideoFrame, texImage2D, MediaStreamTrackProcessor,
-// ImageDecoder, takePhoto, grabFrame, plus createImageBitmap/toBlob/
-// captureStream/requestVideoFrameCallback/getContext and any `canvas` at
-// all, case-insensitive).
+// The privacy law as RE-SCOPED at the run-2 town hall (user-approved
+// 2026-09-01): frame access exists ONLY in the receiver's watcher module
+// and ONLY in its sanctioned downsampled forms (one 32×32 sampling
+// canvas; drawImage scaled down; getImageData over that same rect;
+// requestVideoFrameCallback for per-frame sampling). Everywhere else the
+// v1 absolute holds: no frame APIs anywhere, no frame surfaces in
+// markup, no export/encode/record/capture surfaces ANYWHERE (watcher
+// included), nothing stored, nothing transmitted.
 //
 // The frame-token scan runs over RAW text (comments included) — stricter
 // than comment-stripping; the storage/getUserMedia scans strip comments so
@@ -29,6 +28,9 @@ const sources = [
   { name: 'index.html', text: indexHtml },
 ];
 
+/** The ONLY module the re-scoped law permits to touch frames (run 2). */
+const FRAME_SANCTIONED_MODULE = 'js/watcher.js';
+
 /** Strip /* … *​/ then // comments (scan-legibility only; the frame scan is raw). */
 function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|\s)\/\/[^\n]*/g, '$1');
@@ -47,49 +49,76 @@ function findTokens(files, tokens, { caseInsensitive = false } = {}) {
   return hits;
 }
 
-test('Q2 hygiene: shipped source set is non-empty and includes the app + torch', () => {
+test('Q2 hygiene: shipped source set is non-empty and includes the app + torch + watcher', () => {
   assert.ok(shippedJs.includes('app.js'), 'app.js shipped');
   assert.ok(shippedJs.includes('torch.js'), 'torch.js shipped');
-  assert.ok(sources.length >= 11, `expected the full shipped set, got ${sources.length}`);
+  assert.ok(shippedJs.includes('watcher.js'), 'watcher.js shipped');
+  assert.ok(sources.length >= 12, `expected the full shipped set, got ${sources.length}`);
 });
 
-test('PRIVACY (AC7): zero frame-access tokens in ALL shipped sources, comments included', () => {
-  const BANNED = [
-    'drawImage', 'ImageCapture', 'canvas', // canvas is scanned case-insensitively — there is no canvas at all
-    'getVideoFrame', 'VideoFrame', 'texImage2D', 'texImage', 'getImageData',
+test('PRIVACY (re-scoped law): frame-access tokens only in the watcher, sanctioned forms only', () => {
+  // Banned in EVERY shipped source, watcher included — raw text scan.
+  // ('VideoFrame' is handled separately: it is a substring of the
+  // sanctioned requestVideoFrameCallback.)
+  const BANNED_EVERYWHERE = [
+    'ImageCapture', 'getVideoFrame', 'texImage2D', 'texImage',
     'createImageBitmap', 'toBlob', 'toDataURL', 'captureStream',
-    'requestVideoFrameCallback', 'MediaStreamTrackProcessor',
-    'ImageDecoder', 'grabFrame', 'takePhoto', 'getContext',
-    'readPixels', 'OffscreenCanvas',
+    'MediaStreamTrackProcessor', 'ImageDecoder', 'grabFrame', 'takePhoto',
+    'readPixels', 'OffscreenCanvas', 'MediaRecorder',
   ];
-  const hits = [
-    ...findTokens(sources, BANNED.filter((t) => t !== 'canvas')),
-    ...findTokens(sources, ['canvas'], { caseInsensitive: true }),
+  assert.deepEqual(findTokens(sources, BANNED_EVERYWHERE), [],
+    'export/encode/record/capture surfaces must never appear anywhere');
+
+  // Watcher-only tokens: permitted inside js/watcher.js, banned elsewhere.
+  const WATCHER_ONLY = [
+    'drawImage', 'getImageData', 'getContext', 'requestVideoFrameCallback',
+    'VideoFrame',
   ];
-  assert.deepEqual(hits, [], `frame-access tokens must never appear in shipped sources:\n${hits.join('\n')}`);
+  const outside = sources.filter((s) => s.name !== FRAME_SANCTIONED_MODULE);
+  assert.deepEqual(findTokens(outside, WATCHER_ONLY), [],
+    'frame-reading APIs are confined to the watcher module');
+  // …and the word "canvas" (any case) too.
+  assert.deepEqual(findTokens(outside, ['canvas'], { caseInsensitive: true }), [],
+    'no canvas may exist outside the watcher');
+
+  // Inside the watcher, a bare VideoFrame (outside the rVFC API name)
+  // would still be an unsanctioned frame surface.
+  const watcher = sources.find((s) => s.name === FRAME_SANCTIONED_MODULE);
+  assert.ok(watcher, 'watcher.js present');
+  const vfAll = watcher.text.split('VideoFrame').length - 1;
+  const vfRvfc = watcher.text.split('requestVideoFrameCallback').length - 1;
+  assert.equal(vfAll, vfRvfc, 'every VideoFrame occurrence must be the rVFC API name');
+  assert.ok(watcher.text.includes('samplingCtx.drawImage(video, 0, 0, SAMPLE_GRID, SAMPLE_GRID)'),
+    'watcher drawImage must target the 32×32 grid only');
+  assert.ok(watcher.text.includes('samplingCtx.getImageData(0, 0, SAMPLE_GRID, SAMPLE_GRID)'),
+    'watcher getImageData must read the 32×32 grid only');
+  assert.ok(watcher.text.includes('export const SAMPLE_GRID = 32'),
+    'the sampling grid is a named exported constant (32)');
 });
 
-test('PRIVACY (AC7): no <canvas>/<video>/<img> elements ship in index.html — the app renders no frame surfaces', () => {
-  for (const tag of ['<canvas', '<video', '<img ', '<img>', '<audio']) {
+test('PRIVACY (v1 law): no <canvas>/<img> in markup; the aperture <video> is the sanctioned preview', () => {
+  for (const tag of ['<canvas', '<img ', '<img>', '<audio']) {
     assert.ok(!indexHtml.toLowerCase().includes(tag.toLowerCase()), `index.html must not contain ${tag}`);
   }
 });
 
-test('PRIVACY: the ONE sanctioned stream use is torch.js keep-alive sink (srcObject attach + detach)', () => {
+test('PRIVACY: sanctioned stream sinks are torch.js keep-alive + watcher.js preview (attach + detach)', () => {
   const torch = sources.find((s) => s.name === 'js/torch.js');
   assert.ok(torch, 'torch.js present');
-  assert.ok(/\.srcObject = stream/.test(torch.text), 'sanctioned sink attach present');
-  assert.ok(/srcObject = null/.test(torch.text), 'sanctioned sink detach present');
-  // srcObject must not appear in any OTHER shipped source
-  const others = sources.filter((s) => s.name !== 'js/torch.js' && s.text.includes('srcObject'));
-  assert.deepEqual(others.map((s) => s.name), [], 'srcObject outside torch.js would be an unsanctioned stream sink');
+  assert.ok(/\.srcObject = stream/.test(torch.text), 'torch sink attach present');
+  assert.ok(/srcObject = null/.test(torch.text), 'torch sink detach present');
+  const watcher = sources.find((s) => s.name === 'js/watcher.js');
+  assert.ok(/video\.srcObject = liveStream/.test(watcher.text), 'watcher preview attach present');
+  assert.ok(/video\.srcObject = null/.test(watcher.text), 'watcher preview detach present');
+  const others = sources.filter((s) => s.name !== 'js/torch.js' && s.name !== 'js/watcher.js' && s.text.includes('srcObject'));
+  assert.deepEqual(others.map((s) => s.name), [], 'srcObject outside the sanctioned sinks is forbidden');
 });
 
-test('PRIVACY: camera door is torch.js only — getUserMedia appears in executable code nowhere else', () => {
+test('PRIVACY: camera doors are torch.js + watcher.js only', () => {
   for (const { name, text } of sources) {
     const code = stripComments(text);
-    if (name === 'js/torch.js') {
-      assert.ok(code.includes('getUserMedia'), 'torch.js owns the one gUM call site');
+    if (name === 'js/torch.js' || name === 'js/watcher.js') {
+      assert.ok(code.includes('getUserMedia'), `${name} owns its gUM call site`);
     } else {
       assert.ok(!code.includes('getUserMedia'), `${name} must not call getUserMedia (comments exempt)`);
     }
@@ -133,4 +162,26 @@ test('Q2 detector self-test: the token scanner catches planted violations (non-v
   assert.deepEqual(storageHits, ['p3.js: "localStorage"'], 'comment-stripped storage scan catches real calls, not comments');
   const benignStorage = findTokens([{ name: 'p4.js', text: stripComments('// no localStorage anywhere\nconst x = 1;') }], ['localStorage']);
   assert.deepEqual(benignStorage, [], 'pure comments do not trip the stripped scan');
+});
+
+test('Q2 detector self-test (run 2): the watcher allowlist is non-vacuous', () => {
+  // A frame token outside the watcher is caught by the confinement scan.
+  const outside = [{ name: 'js/app.js', text: 'const d = ctx.getImageData(0, 0, w, h);' }];
+  assert.deepEqual(findTokens(outside, ['getImageData']), ['js/app.js: "getImageData"']);
+
+  // A banned-everywhere token inside the watcher is still caught.
+  const evilWatcher = [{ name: 'js/watcher.js', text: 'samplingCtx.drawImage(video, 0, 0, 32, 32); track.takePhoto();' }];
+  assert.deepEqual(findTokens(evilWatcher, ['takePhoto']), ['js/watcher.js: "takePhoto"']);
+
+  // The sanctioned-form pins are exact-string: drifting the downsample
+  // shape breaks the pin (a full-res read could not pass unnoticed).
+  const driftedWatcher = 'samplingCtx.drawImage(video, 0, 0, 1920, 1080);';
+  assert.ok(!driftedWatcher.includes('samplingCtx.drawImage(video, 0, 0, SAMPLE_GRID, SAMPLE_GRID)'),
+    'a full-resolution drawImage fails the sanctioned-form pin');
+
+  // A bare VideoFrame outside the rVFC API name is caught inside watcher.
+  const bareVF = 'const f = new VideoFrame(buf); requestVideoFrameCallback(cb);';
+  const vfAll = bareVF.split('VideoFrame').length - 1;
+  const vfRvfc = bareVF.split('requestVideoFrameCallback').length - 1;
+  assert.ok(vfAll > vfRvfc, 'a bare VideoFrame constructor is distinguishable from the rVFC API');
 });
