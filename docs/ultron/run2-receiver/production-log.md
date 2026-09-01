@@ -194,3 +194,14 @@ dispositions, production, finishing action summary, final acceptance). Known
 deviations documented (regex-degraded critique; first-fold note; ITU '.'/'+' receive
 collision; runtime rigs disposable). Remaining acts are user-owned by design: the
 two-phone device script (T-Q3-run2 results) and redeploy.
+
+## T-D0-run2 — redeploy (user-delegated) 2026-09-01
+
+User: "go ahead and deploy so i can see on mobile." Deployed via the locally
+authenticated wrangler to the existing Worker `morse-code`:
+**https://morse-code.arrangedgodly.workers.dev** (version 1af94c1a). Bundle per
+DEPLOY.md §1 (15 app files incl. the three run-2 modules; dev artifacts excluded —
+the config sits outside the served dir after a first-pass sweep of a wrangler temp
+file, re-deployed clean: the stray asset now 404s). Verified live: index/watcher/
+decoder/css all 200, the mode lever + data-mode markup served, app.js carries the
+receive wiring. HTTPS automatic — the camera paths work on phones.
