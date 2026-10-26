@@ -34,7 +34,6 @@
       <p class="mode-hint">One register, two directions. Speak, or listen.</p>
     </fieldset>
   </section>
-    <button class="key options-trigger" id="options-trigger" type="button" aria-haspopup="dialog" aria-controls="options-panel">OPTIONS<span id="options-speed">5 WPM</span></button>
   </header>
 
   <!-- Run 2 — the mode lever: one register, two directions -->
@@ -43,11 +42,10 @@
 
     <!-- The composer -->
     <section class="bay" id="composer" aria-label="MESSAGE">
-      <label class="legend" for="message">SHORT MESSAGE</label>
-      <textarea id="message" class="message-input" rows="1" inputmode="text" aria-describedby="message-hint message-duration"
+      <div class="composer-head"><label class="legend" for="message">YOUR MESSAGE</label><output id="message-duration" for="message" aria-live="off"></output></div>
+      <textarea id="message" class="message-input" rows="1" inputmode="text" aria-describedby="message-duration"
                 autocomplete="off" spellcheck="false"
                 placeholder="A FEW WORDS…">HELLO DARK ROOM</textarea>
-      <div class="composer-caption"><p id="message-hint">A few words travel best.</p><output id="message-duration" for="message" aria-live="off"></output></div>
       <p class="tape-flag" id="unknown-flags" hidden>NO MORSE SIGN FOR: <span class="flag-chars"></span></p>
       <p class="tape-empty" id="empty-note" hidden>EMPTY TAPE. TYPE A MESSAGE TO BROADCAST.</p>
       <p class="flag-note" id="flag-note" hidden>Characters without a Morse sign stay on the tape, unspoken.</p>
@@ -209,6 +207,8 @@
     </section>
 
     <!-- Transport keys -->
+    <div class="control-deck">
+    <button class="key options-trigger" id="options-trigger" type="button" aria-haspopup="dialog" aria-controls="options-panel"><span>OPTIONS</span><span id="options-speed">5 WPM</span></button>
     <section class="bay" id="transport">
       <div class="keys keys-cold">
         <button class="key key-primary key-broadcast" type="button" data-action="broadcast">BROADCAST</button>
@@ -250,6 +250,7 @@
         <button class="key key-primary" type="button" data-action="listen-again">LISTEN AGAIN</button>
       </div>
     </section>
+    </div>
 
     <!-- Named speed steps -->
 
@@ -259,7 +260,6 @@
 
   <dialog id="options-panel" aria-labelledby="options-title">
     <div class="dialog-head"><h2 id="options-title">OPTIONS</h2><button class="key" id="options-close" type="button">DONE</button></div>
-    <p class="receive-options">Receiving detects the sender's speed automatically. Nothing is recorded or sent.</p>
     <section class="bay" id="speed">
       <fieldset class="steps-field">
         <legend class="legend">SPEED</legend>

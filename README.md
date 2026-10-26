@@ -59,7 +59,8 @@ The mode lever at the top picks one:
 ## Accessibility
 
 The main interface fits one screen, with a compact Morse mark and mode switch.
-OPTIONS contains speed, sound, and link sharing. Long transcripts and dialogs
+Broadcast OPTIONS sits with the send controls and contains speed, sound, and
+link sharing. Receive has no Options button. Long transcripts and dialogs
 scroll internally. Very short portrait viewports, including those reduced by
 an on-screen keyboard or heavy zoom, can scroll the work area to keep controls reachable.
 

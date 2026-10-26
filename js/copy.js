@@ -101,7 +101,7 @@ export const COPY = deepFreeze({
 
   // The composer -------------------------------------------------------------
   input: {
-    label: 'SHORT MESSAGE',
+    label: 'YOUR MESSAGE',
     placeholder: 'A FEW WORDS…',
     empty: 'EMPTY TAPE. TYPE A MESSAGE TO BROADCAST.',
     unknownLead: 'NO MORSE SIGN FOR:',

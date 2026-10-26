@@ -46,18 +46,26 @@ Canonical web origin: `https://morse.graydonwasil.com`. Android launch and asset
 association configuration target this origin. The Android application ID remains
 `com.arrangedgodly.morsecode`.
 
-The main interface fills one viewport. Speed, sound, and sharing live in OPTIONS.
+The main interface fills one viewport. Broadcast speed, sound, and sharing live
+in OPTIONS beside or above the send controls. Receive has no OPTIONS control.
+The header contains only the Morse brand and a wider Broadcast/Receive switch.
 Receiving has a selectable live transcript beneath the ticker. It follows new
 letters until the user scrolls back, then holds that reading position until
 LATEST is pressed. The transcript is memory-only and clears on a new listen.
 The shared web UI also runs in the Android wrapper.
 
 Short messages are the primary use, clarified by the user on 2026-10-26.
-The centered composer stays compact and shows the scheduled send duration at
-the selected speed. It encourages a few words without truncating longer input
-or shared messages. The received transcript is also compact, with internal
+The centered composer stays compact, is labeled YOUR MESSAGE, and shows the
+scheduled send duration at the selected speed. There is no extra caption below
+it. Longer input and shared messages remain intact. The received transcript is also compact, with internal
 scrolling for longer records. Key presses use brief mechanical feedback, with
 movement removed for reduced-motion and save-data preferences.
+
+Desktop layouts use a 1120px instrument width, larger composer text and tape,
+and a horizontal Options/send row. Desktop receiving places aiming guidance
+beside the transcript. Short desktop windows use a more compact height scale.
+Launcher and store icon exports have an opaque full-bleed ground with no
+pre-rounded rim; the original small header mark stays in use.
 
 Future distribution scope: a discreet official Google Play badge in the website's
 OPTIONS dialog links to the public Morse listing. It stays hidden inside the

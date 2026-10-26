@@ -311,3 +311,30 @@ No idle animation or additional flashing is introduced.
 The original SVG mark also has direct 1024px and 512px PNG exports in
 `docs/branding`. The Google Play export has an opaque square background so the
 store can apply its own outer mask. These files are excluded from web deployment.
+
+### Broadcast controls and desktop layout refinement
+
+This update supersedes the earlier header Options placement, short-message
+label/caption, and 720px desktop maximum. The header now contains only Morse and
+the wider mode switch. YOUR MESSAGE shares a row with the scheduled duration;
+the supporting caption is removed. Options sits above the transport on portrait
+phones and beside it on desktop/short landscape, and is hidden in Receive.
+
+Main sections distribute through the available height instead of forming a
+small centered stack. Desktop uses a 1120px maximum width, an 880px composer,
+28px input text, and a 160px paper band. Receive keeps the paper across the top,
+then places the camera/meter beside a 240px transcript, with transport below.
+Desktop windows at most 700px high use 22px input text, a 124px band, and a
+176px transcript. The compact mobile input and keyboard overflow behavior remain.
+
+The cleaned launcher/store artwork is `docs/branding/morse-app.svg`. Its square
+ground has no rounded bezel or transparent edge. Direct vector exports replace
+the 1024px master, 512px store icon, web 192px/512px/maskable icons, and Apple
+touch icon. The small existing header favicon remains unchanged.
+
+Browser checks pass at 320x568, 390x844, 844x390, 768x1024, 1366x600, 1440x900,
+and 1920x1080. They cover both modes, moved/hidden Options, duration updates,
+long input, empty input, keyboard height, live decoding, copying, and scroll
+review. Final phone, landscape, and desktop captures were directly inspected.
+The layout detector's inherited zero-padding findings describe flat bays and
+the edge-to-edge paper band; actual text controls retain internal padding.
