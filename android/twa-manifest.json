@@ -1,8 +1,8 @@
 {
   "packageId": "com.arrangedgodly.morsecode",
   "host": "morsecode.graydonwasil.com",
-  "name": "The Morse Code Broadcaster",
-  "launcherName": "The Register",
+  "name": "Morse",
+  "launcherName": "Morse",
   "display": "standalone",
   "themeColor": "#171008",
   "themeColorDark": "#000000",

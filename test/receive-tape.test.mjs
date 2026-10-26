@@ -25,7 +25,7 @@ function makeTape() {
   const context = vm.createContext({
     document: { createElement: () => new Element() }, rxStrip: strip,
     rxMachine: { state: 'active' }, RECEIVE_STATES: { ARMED: 'armed' },
-    firePulse() {}, renderRx() {}, announceRxBurst() {}, announceRxWord() {},
+    firePulse() {}, renderRx() {}, requestTranscript() {}, announceRxBurst() {}, announceRxWord() {},
   });
   vm.runInContext(app.slice(app.indexOf('const RX_PUNCH ='), app.indexOf('// -- announcements')), context);
   vm.runInContext(app.slice(app.indexOf('function onSessionEvent('), app.indexOf('// -- receive render')), context);

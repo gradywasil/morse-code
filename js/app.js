@@ -134,6 +134,18 @@ const broadcastKey = $('.key-broadcast');
 const replayKeys = Array.from(document.querySelectorAll('.keys-done .key, .keys-error .key'));
 const toneKeys = Array.from(document.querySelectorAll('[data-action="tone"]'));
 const speedRadios = Array.from(document.querySelectorAll('input[name="speed"]'));
+const optionsPanel = $('#options-panel');
+const flowPanel = $('#flow-panel');
+const FLOW_STATES = new Set(['preflight', 'awaiting-permission', 'permission-denied', 'receive-preflight', 'receive-denied']);
+
+function syncFlowPanel(state) {
+  if (FLOW_STATES.has(state) && !flowPanel.open) flowPanel.showModal();
+  else if (!FLOW_STATES.has(state) && flowPanel.open) flowPanel.close();
+}
+
+$('#options-trigger').addEventListener('click', () => optionsPanel.showModal());
+$('#options-close').addEventListener('click', () => optionsPanel.close());
+optionsPanel.addEventListener('click', event => { if (event.target === optionsPanel) optionsPanel.close(); });
 
 // ---------------------------------------------------------------------------
 // Channels + machine (single instances for the page's life)
@@ -323,6 +335,7 @@ function render(snapshot) {
   const state = snapshot.state;
 
   body.dataset.state = state;
+  syncFlowPanel(state);
   if (state !== STATES.READY) clearBeat();
   // The fire pulse lives only inside a broadcast.
   if (state !== STATES.BROADCASTING && state !== STATES.BROADCASTING_ON_SCREEN) {
@@ -383,7 +396,10 @@ function updateToneLabels() {
   // The label names the CURRENT state, not the click's action: tone on at
   // unmuted boot ("TONE"), "TONE OFF" only while actually muted.
   const label = audio.isMuted() ? COPY.transport.toneOff : COPY.transport.tone;
-  for (const key of toneKeys) key.textContent = label;
+  for (const key of toneKeys) {
+    key.textContent = label;
+    key.setAttribute('aria-pressed', String(!audio.isMuted()));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -746,6 +762,7 @@ for (const radio of speedRadios) {
     }
     if (radio.checked && SPEED_STEPS[radio.value]) {
       stepId = radio.value;
+      $('#options-speed').textContent = `${SPEED_STEPS[stepId].wpm} WPM`;
       requestHashWrite();
     }
   });
@@ -753,6 +770,7 @@ for (const radio of speedRadios) {
 
 function selectStep(id) {
   stepId = SPEED_STEPS[id] ? id : DEFAULT_STEP_ID;
+  $('#options-speed').textContent = `${SPEED_STEPS[stepId].wpm} WPM`;
   for (const radio of speedRadios) {
     radio.checked = radio.value === stepId;
   }
@@ -814,6 +832,40 @@ const meterPartialNote = $('.meter-partial');
 const receiveDoneNote = $('[data-receive-done-note]');
 const rxStrip = $('.tape-rx');
 const rxAnnounce = $('.meter .sr-live'); // markup-scoped live-region config
+const receivedText = $('#received-text');
+const transcriptLatest = $('#transcript-latest');
+const receiveCopyKey = $('[data-action="copy-message"]');
+let transcriptPending = false;
+let transcriptDisplayed = '';
+let followTranscript = true;
+
+function requestTranscript() {
+  if (transcriptPending) return;
+  transcriptPending = true;
+  // Session events finish updating canonical text before this reads it.
+  queueMicrotask(() => {
+    transcriptPending = false;
+    const text = sessionTextNow();
+    if (text === transcriptDisplayed) return;
+    if (transcriptDisplayed && text.startsWith(transcriptDisplayed)) {
+      receivedText.firstChild.appendData(text.slice(transcriptDisplayed.length));
+    } else receivedText.textContent = text || 'Decoded letters appear here.';
+    transcriptDisplayed = text;
+    receivedText.dataset.empty = String(!text);
+    receiveCopyKey.disabled = !text;
+    if (followTranscript) receivedText.scrollTop = receivedText.scrollHeight;
+  });
+}
+
+receivedText.addEventListener('scroll', () => {
+  followTranscript = receivedText.scrollHeight - receivedText.clientHeight - receivedText.scrollTop < 24;
+  transcriptLatest.hidden = followTranscript;
+});
+transcriptLatest.addEventListener('click', () => {
+  followTranscript = true;
+  receivedText.scrollTop = receivedText.scrollHeight;
+  transcriptLatest.hidden = true;
+});
 
 // -- receive state -----------------------------------------------------------
 let mode = 'broadcast';
@@ -1029,6 +1081,7 @@ function onSessionEvent(event) {
       break;
     case 'letter':
       rxCompleteLetter(event);
+      requestTranscript();
       announceRxBurst(event.known ? event.char : '');
       break;
     case 'word':
@@ -1043,6 +1096,7 @@ function onSessionEvent(event) {
       break;
     case 'complete':
       rxCompletedText = event.text;
+      requestTranscript();
       if (event.source === 'silence') {
         rxMachine.dispatch(RECEIVE_EVENTS.AUTO_COMPLETE, { partial: event.partial });
       } else {
@@ -1064,6 +1118,7 @@ function onSessionEvent(event) {
 function renderRx() {
   const state = rxMachine.state;
   body.dataset.state = state;
+  syncFlowPanel(state);
   if (state !== RECEIVE_STATES.ARMED && state !== RECEIVE_STATES.ACTIVE) {
     clearFire(); // the lamp fires only while light speaks
   }
@@ -1135,6 +1190,10 @@ function resetRxSurface() {
   rxCompletedText = '';
   rxLastWord = '';
   rxSession = null;
+  followTranscript = true;
+  transcriptLatest.hidden = true;
+  receiveDoneNote.textContent = 'Letters appear as the light is decoded.';
+  requestTranscript();
   rxResetTapeDom();
   rxLightOnTMs = null;
   rxLightOffTMs = null;
@@ -1192,6 +1251,19 @@ ACTIONS['copy-message'] = () => {
     () => { receiveDoneNote.textContent = RX.copyFailed; }
   );
 };
+
+// These shared controls follow the active mode, including Escape from a gate.
+const cancelBroadcast = ACTIONS.cancel;
+ACTIONS.cancel = () => body.dataset.mode === 'receive'
+  ? rxMachine.dispatch(RECEIVE_EVENTS.CANCEL) : cancelBroadcast();
+const resetBroadcast = ACTIONS.reset;
+ACTIONS.reset = () => body.dataset.mode === 'receive'
+  ? rxMachine.dispatch(RECEIVE_EVENTS.RESET) : resetBroadcast();
+flowPanel.addEventListener('cancel', event => {
+  event.preventDefault();
+  ACTIONS.cancel();
+  if (flowPanel.open) ACTIONS.reset();
+});
 
 function sessionTextNow() {
   return rxSession !== null ? rxSession.status().text : '';

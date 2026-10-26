@@ -30,7 +30,7 @@ Used on phones, usually held up, often in dim rooms (the light is the point). Ca
 
 - Translator: full ITU International Morse (A–Z, 0–9, punctuation `. , ? ' ! / ( ) & : ; = + - _ " $ @`); unknown characters visibly flagged in the preview, never silently dropped. No prosigns. Timing in dot-units: dot 1, dash 3, intra-char gap 1, letter gap 3, word gap 7.
 - Broadcast channels: LED torch via `getUserMedia({video})` + `applyConstraints({advanced:[{torch}]})` where supported (Chromium-based Android browsers and iOS Safari 17.4+, with device quirks); full-screen white/black flash via Fullscreen API everywhere else — screen-flash fallback remains first-class for everything else; synchronized Web Audio tones; synced on-screen Morse readout.
-- WPM slider with a low photosensitivity-aware default and a capped upper bound (exact values are research-informed open decisions).
+- Speed buttons in OPTIONS: LEARNER 5 WPM, STANDARD 8, BRISK 12, with LEARNER as the default and 12 WPM as the cap.
 - Pre-flight: test flash, camera permission flow, photosensitivity notice before first broadcast.
 - Sharing: message + WPM round-trip through the URL hash.
 - Receiver (run 2): same page, BROADCAST/RECEIVE mode toggle. Gesture-driven camera permission with a why-camera plate before the prompt; small live preview for aiming plus a non-visual signal meter (hearing light / hearing nothing / noise); downsampled on-device brightness sampling → timestamped light edges; pure decoder with zero-coordination clock recovery (dot unit inferred from durations — ITU ratios 1/3/1/3/7 are speed-invariant) → live streaming text; honest partial-message indication on mid-stream join; auto-complete after extended silence (~8–10 s) plus manual STOP; COPY for the decoded message. Compatibility contract: broadcasts sent by this app (torch and screen channels, all three WPM steps) — hand-held-flashlight Morse is best-effort, never promised.
@@ -40,7 +40,13 @@ Used on phones, usually held up, often in dim rooms (the light is the point). Ca
 
 ## Brand Commitments
 
-Working title: "The Morse Code Broadcaster". No logo, no assets, no voice commitments yet (absence noted — future work must not fabricate brand evidence).
+Public label: "Morse", condensed by user request on 2026-10-26. The existing punched-tape M favicon is the small header mark; the old Register heading and tagline no longer occupy the main screen. Preserve the warm ground, paper tape, and amber controls.
+
+The main interface fills one viewport. Speed, sound, and sharing live in OPTIONS.
+Receiving has a selectable live transcript beneath the ticker. It follows new
+letters until the user scrolls back, then holds that reading position until
+LATEST is pressed. The transcript is memory-only and clears on a new listen.
+The shared web UI also runs in the Android wrapper.
 
 ## Evidence on Hand
 

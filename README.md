@@ -1,4 +1,4 @@
-# The Morse Code Broadcaster
+# Morse
 
 Type a message in plain English and your phone's flashlight broadcasts it in Morse code — real hardware, no app install, no server. Point a second phone's camera at the light and it decodes the message back into text as it flashes. The interface is a telegraph register: your words punch a paper tape as dots and dashes, a read-head traverses the tape while the light speaks — and when listening, the tape punches itself from the light it hears.
 
@@ -44,6 +44,8 @@ The mode lever at the top picks one:
 
 ## Receiving
 
+- **The whole message stays readable.** A selectable transcript below the tape fills in live and remains after STOP. Scroll inside the transcript to review earlier text; it holds your position while new letters arrive. LATEST returns to the incoming end, and COPY works during or after listening. Starting a new listen clears the previous record.
+
 - **Zero coordination.** Speed is auto-detected; start listening before, during, or after the sender starts. Joining mid-message is flagged honestly — the record shows a PARTIAL note rather than inventing a beginning.
 - **A meter, not guesswork.** The station reads HEARING NOTHING (with aiming hints), HEARING LIGHT (decoding), or LIGHT, BUT NOT MORSE (glare, busy lights) — receiving works without watching the picture at all.
 - **Senders that work**: another phone running this app — torch or full-screen — at any of the three speeds. A hand-held flashlight keyed by a person is best-effort: the decoder tolerates human timing, but nothing is promised.
@@ -54,11 +56,16 @@ The mode lever at the top picks one:
 
 ## Accessibility
 
+The main interface fits one screen, with a compact Morse mark and mode switch.
+OPTIONS contains speed, sound, and link sharing. Long transcripts and dialogs
+scroll internally. Very short portrait viewports, including those reduced by
+an on-screen keyboard or heavy zoom, can scroll the work area to keep controls reachable.
+
 Every glow and motion effect degrades cleanly under `prefers-reduced-motion` and save-data modes with no information loss. The interface is fully keyboard-operable (the mode lever is the first tab stop; Enter arms listening). Announcements go through polite live regions — state changes as they happen, decoded words one word at a time, never per-letter chatter — and the message is always readable on the tape regardless of which channel is broadcasting.
 
 ## Running the tests
 
-579 tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, the live ticker, and the privacy scan. Camera-frame simulations also verify exact received text at 24, 30, and 60 fps across all three speeds with a stationary bright background, including the opening H and final M appearing before the next letter or completion timeout:
+581 tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, the live ticker, the transcript, and the privacy scan. Camera-frame simulations also verify exact received text at 24, 30, and 60 fps across all three speeds with a stationary bright background, including the opening H and final M appearing before the next letter or completion timeout:
 
 ```bash
 npm test

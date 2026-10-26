@@ -15,42 +15,12 @@
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body data-state="idle" data-mode="broadcast">
-  <!--
-  THE REGISTER — direction contract (code-led; world locked by user 2026-08-28)
-
-  THESIS: The tape is the translation and the read-head is the broadcast —
-  typing punches paper, the traversing head reads holes as light. Refuses the
-  centered card, textarea, and blue button of the category default.
-
-  OWN-WORLD: Dark warm instrument ground; a full-bleed paper-tape band with
-  punch-hole dots and dashes, sprocket feed, and printed letters; stencil
-  machine-plate legends; one amber lamp accent for live states. Saira Stencil
-  One legends, Barlow plates, Spline Sans Mono tape data.
-
-  STORY: A visitor types, watches punches appear letter by letter, presses
-  BROADCAST, and holds the phone up as its lamp, screen, and tone speak the
-  tape in International Morse.
-
-  FIRST VIEWPORT: Portrait phone: compact nameplate; MESSAGE composer; then
-  the tape band dominating edge to edge, read-head at center, machine status
-  printed beneath; BROADCAST key at thumb height; named speed steps and the
-  share row below.
-
-  FORM: Punched-tape telegraph register — position 4 of 7 grounded candidates;
-  seed key 53cae9af.
-
-  FINISH: unreviewed and undocumented is unfinished; this build ends with the
-  finish review, the verdict, DESIGN.md, and every shipping raster carrying
-  its provenance.
-  -->
+  <!-- A compact Morse instrument: discreet toolbar, live tape, readable message.
+       The page stays inside the viewport; long text and dialogs scroll internally.
+       Preserve the warm ground, paper tape, amber states, and device-only data. -->
 
   <header class="plate nameplate">
-    <p class="plate-rule" aria-hidden="true"></p>
-    <h1 class="name-title">THE REGISTER</h1>
-    <p class="name-sub">A MACHINE FOR SPEAKING MORSE BY LIGHT</p>
-  </header>
-
-  <!-- Run 2 — the mode lever: one register, two directions -->
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span><h1 class="name-title">MORSE</h1></div>
   <section class="bay bay-mode" id="mode" aria-label="MODE">
     <fieldset class="mode-field">
       <legend class="legend">MODE</legend>
@@ -63,15 +33,19 @@
       <p class="mode-hint">One register, two directions. Speak, or listen.</p>
     </fieldset>
   </section>
+    <button class="key options-trigger" id="options-trigger" type="button" aria-haspopup="dialog" aria-controls="options-panel">OPTIONS<span id="options-speed">5 WPM</span></button>
+  </header>
+
+  <!-- Run 2 — the mode lever: one register, two directions -->
 
   <main class="deck">
 
     <!-- The composer -->
     <section class="bay" id="composer" aria-label="MESSAGE">
       <label class="legend" for="message">MESSAGE</label>
-      <input id="message" class="message-input" type="text" inputmode="text"
-             autocomplete="off" spellcheck="false" value="HELLO DARK ROOM"
-             placeholder="TYPE THE MESSAGE TO SEND">
+      <textarea id="message" class="message-input" rows="3" inputmode="text"
+                autocomplete="off" spellcheck="false"
+                placeholder="TYPE THE MESSAGE TO SEND">HELLO DARK ROOM</textarea>
       <p class="tape-flag" id="unknown-flags" hidden>NO MORSE SIGN FOR: <span class="flag-chars"></span></p>
       <p class="tape-empty" id="empty-note" hidden>EMPTY TAPE. TYPE A MESSAGE TO BROADCAST.</p>
       <p class="flag-note" id="flag-note" hidden>Characters without a Morse sign stay on the tape, unspoken.</p>
@@ -206,6 +180,121 @@
     </section>
 
     <!-- First-run gate: the photosensitivity hazard plate -->
+
+    <!-- Why the camera prompt (shown before the browser prompt) -->
+
+    <!-- Permission denied: the screen offer, never a dead end -->
+
+    <!-- No torch: the screen framed positively -->
+    <aside class="bay" id="screen-note" aria-label="THE SCREEN IS THE LAMP">
+      <p class="screen-line">THE SCREEN IS THE LAMP. HOLD IT UP FACING THE ROOM.</p>
+    </aside>
+
+    <!-- Run 2 — the receive why-camera plate (before the prompt) -->
+
+    <!-- Run 2 — receive permission denied: retry, never a dead end -->
+
+    <section id="received-message" aria-labelledby="received-title">
+      <div class="transcript-head">
+        <h2 id="received-title">RECEIVED MESSAGE</h2>
+        <div class="transcript-actions">
+          <button class="key" id="transcript-latest" type="button" hidden>LATEST</button>
+          <button class="key" type="button" data-action="copy-message" disabled>COPY</button>
+        </div>
+      </div>
+      <div id="received-text" class="transcript-scroll" role="region" aria-label="Received message text" aria-live="off" tabindex="0" data-empty="true">Decoded letters appear here.</div>
+      <p class="receive-done-offer" data-receive-done-note>Letters appear as the light is decoded.</p>
+    </section>
+
+    <!-- Transport keys -->
+    <section class="bay" id="transport">
+      <div class="keys keys-cold">
+        <button class="key key-primary key-broadcast" type="button" data-action="broadcast">BROADCAST</button>
+      </div>
+      <div class="keys keys-cancel">
+        <button class="key" type="button" data-action="cancel">CANCEL</button>
+      </div>
+      <div class="keys keys-live">
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+        <button class="key" type="button" data-action="pause">PAUSE</button>
+        <button class="key" type="button" data-action="switch-screen">SWITCH TO SCREEN</button>
+      </div>
+      <p class="switch-hint">LAMP NOT FLASHING? THE SCREEN CAN TAKE OVER MID-MESSAGE.</p>
+      <div class="keys keys-live-screen">
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+        <button class="key" type="button" data-action="pause">PAUSE</button>
+      </div>
+      <div class="keys keys-paused">
+        <button class="key key-primary" type="button" data-action="resume">RESUME</button>
+        <button class="key key-stop" type="button" data-action="stop">STOP</button>
+      </div>
+      <div class="keys keys-done">
+        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
+      </div>
+      <p class="done-offer">REPLAY IT, OR SHARE THE LINK.</p>
+      <div class="keys keys-error">
+        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
+        <button class="key" type="button" data-action="reset">RESET</button>
+      </div>
+      <p class="error-recover">THE MESSAGE SURVIVES. REPLAY, RETRY, OR RESET.</p>
+      <!-- Run 2 — receive transport -->
+      <div class="keys keys-receive-idle">
+        <button class="key key-primary" type="button" data-action="listen-again">BEGIN LISTENING</button>
+      </div>
+      <div class="keys keys-receive-live">
+        <button class="key key-stop" type="button" data-action="stop-listening">STOP LISTENING</button>
+      </div>
+      <div class="keys keys-receive-done">
+        <button class="key key-primary" type="button" data-action="listen-again">LISTEN AGAIN</button>
+      </div>
+    </section>
+
+    <!-- Named speed steps -->
+
+    <!-- Share row -->
+
+  </main>
+
+  <dialog id="options-panel" aria-labelledby="options-title">
+    <div class="dialog-head"><h2 id="options-title">OPTIONS</h2><button class="key" id="options-close" type="button">DONE</button></div>
+    <p class="receive-options">Receiving detects the sender's speed automatically. Nothing is recorded or sent.</p>
+    <section class="bay" id="speed">
+      <fieldset class="steps-field">
+        <legend class="legend">SPEED</legend>
+        <div class="steps">
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-learner" checked value="LEARNER">
+            <label class="key step-key" for="step-learner"><span class="step-name">LEARNER</span><span class="step-wpm">5</span></label>
+            <p class="step-detail">5 WPM. Slow, even punch. Flashes stay under 3 per second. The default.</p>
+          </div>
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-standard" value="STANDARD">
+            <label class="key step-key" for="step-standard"><span class="step-name">STANDARD</span><span class="step-wpm">8</span></label>
+            <p class="step-detail">8 WPM. Trained pace. Repeated dots reach 3.3 per second.</p>
+          </div>
+          <div class="step">
+            <input class="step-radio" type="radio" name="speed" id="step-brisk" value="BRISK">
+            <label class="key step-key" for="step-brisk"><span class="step-name">BRISK</span><span class="step-wpm">12</span></label>
+            <p class="step-detail">12 WPM. Fast punch for practiced eyes.</p>
+            <p class="step-caution">RAPID FLASH: REPEATED DOTS REACH 5.0 PER SECOND — ABOVE THE 3-HERTZ SAFETY LINE.</p>
+          </div>
+        </div>
+        <p class="speed-cap">CEILING 12 WPM. NO FASTER STEP EXISTS.</p>
+      </fieldset>
+    </section>
+    <section class="audio-option" aria-label="Sound"><span class="legend">SOUND</span><button class="key" type="button" data-action="tone">TONE</button></section>
+    <section class="bay" id="share" aria-label="SHARE">
+      <div class="share-row">
+        <button class="key" type="button" data-action="copy-link">COPY LINK</button>
+        <p class="share-carries">The link holds the message and its speed. No server, no record.</p>
+      </div>
+      <p class="share-outcome" data-outcome="copied" hidden>LINK COPIED TO THE CLIPBOARD</p>
+      <p class="share-outcome" data-outcome="failed" hidden>COPY REFUSED. COPY THE ADDRESS BAR BY HAND.</p>
+      <p class="shared-loaded" hidden>MESSAGE AND SPEED LOADED FROM THE LINK.</p>
+    </section>
+  </dialog>
+
+  <dialog id="flow-panel" aria-label="Before you begin">
     <aside class="bay gate-plate" id="hazard" aria-label="CAUTION — FLASHING LIGHT">
       <h2 class="gate-title">CAUTION — FLASHING LIGHT</h2>
       <div class="gate-grid">
@@ -232,8 +321,6 @@
         <button class="key" type="button" data-action="decline">NOT NOW</button>
       </div>
     </aside>
-
-    <!-- Why the camera prompt (shown before the browser prompt) -->
     <aside class="bay" id="why-camera" aria-label="WHY THE CAMERA PROMPT">
       <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
       <ul class="why-lines">
@@ -246,8 +333,6 @@
         <button class="key key-primary" type="button" data-action="continue-prompt">CONTINUE TO THE PROMPT</button>
       </div>
     </aside>
-
-    <!-- Permission denied: the screen offer, never a dead end -->
     <aside class="bay" id="denied" aria-label="PERMISSION DENIED">
       <h2 class="gate-title">BROADCAST BY SCREEN LIGHT</h2>
       <p class="denied-line">THE SCREEN NEEDS NO PERMISSION AND SPEAKS THE SAME MORSE.</p>
@@ -257,13 +342,6 @@
         <button class="key" type="button" data-action="retry-arm">RETRY THE TORCH</button>
       </div>
     </aside>
-
-    <!-- No torch: the screen framed positively -->
-    <aside class="bay" id="screen-note" aria-label="THE SCREEN IS THE LAMP">
-      <p class="screen-line">THE SCREEN IS THE LAMP. HOLD IT UP FACING THE ROOM.</p>
-    </aside>
-
-    <!-- Run 2 — the receive why-camera plate (before the prompt) -->
     <aside class="bay gate-plate" id="why-camera-receive" aria-label="WHY THE CAMERA PROMPT">
       <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
       <ul class="why-lines">
@@ -277,8 +355,6 @@
         <button class="key" type="button" data-action="cancel">NOT NOW</button>
       </div>
     </aside>
-
-    <!-- Run 2 — receive permission denied: retry, never a dead end -->
     <aside class="bay gate-plate" id="receive-denied" aria-label="PERMISSION DENIED">
       <h2 class="gate-title">PERMISSION DENIED</h2>
       <p class="denied-line">CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.</p>
@@ -288,94 +364,7 @@
         <button class="key" type="button" data-action="reset">BACK TO REST</button>
       </div>
     </aside>
-
-    <!-- Transport keys -->
-    <section class="bay" id="transport">
-      <div class="keys keys-cold">
-        <button class="key key-primary key-broadcast" type="button" data-action="broadcast">BROADCAST</button>
-        <button class="key" type="button" data-action="tone">TONE</button>
-      </div>
-      <div class="keys keys-cancel">
-        <button class="key" type="button" data-action="cancel">CANCEL</button>
-      </div>
-      <div class="keys keys-live">
-        <button class="key key-stop" type="button" data-action="stop">STOP</button>
-        <button class="key" type="button" data-action="pause">PAUSE</button>
-        <button class="key" type="button" data-action="switch-screen">SWITCH TO SCREEN</button>
-        <button class="key" type="button" data-action="tone">TONE</button>
-      </div>
-      <p class="switch-hint">LAMP NOT FLASHING? THE SCREEN CAN TAKE OVER MID-MESSAGE.</p>
-      <div class="keys keys-live-screen">
-        <button class="key key-stop" type="button" data-action="stop">STOP</button>
-        <button class="key" type="button" data-action="pause">PAUSE</button>
-        <button class="key" type="button" data-action="tone">TONE</button>
-      </div>
-      <div class="keys keys-paused">
-        <button class="key key-primary" type="button" data-action="resume">RESUME</button>
-        <button class="key key-stop" type="button" data-action="stop">STOP</button>
-      </div>
-      <div class="keys keys-done">
-        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
-      </div>
-      <p class="done-offer">REPLAY IT, OR SHARE THE LINK.</p>
-      <div class="keys keys-error">
-        <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
-        <button class="key" type="button" data-action="reset">RESET</button>
-      </div>
-      <p class="error-recover">THE MESSAGE SURVIVES. REPLAY, RETRY, OR RESET.</p>
-      <!-- Run 2 — receive transport -->
-      <div class="keys keys-receive-live">
-        <button class="key key-stop" type="button" data-action="stop-listening">STOP LISTENING</button>
-      </div>
-      <div class="keys keys-receive-done">
-        <button class="key key-primary" type="button" data-action="copy-message">COPY MESSAGE</button>
-        <button class="key" type="button" data-action="listen-again">LISTEN AGAIN</button>
-      </div>
-      <p class="receive-done-offer" data-receive-done-note>THE MESSAGE STANDS ON THE TAPE.</p>
-    </section>
-
-    <!-- Named speed steps -->
-    <section class="bay" id="speed">
-      <fieldset class="steps-field">
-        <legend class="legend">SPEED</legend>
-        <div class="steps">
-          <div class="step">
-            <input class="step-radio" type="radio" name="speed" id="step-learner" checked value="LEARNER">
-            <label class="key step-key" for="step-learner"><span class="step-name">LEARNER</span><span class="step-wpm">5</span></label>
-            <p class="step-detail">5 WPM. Slow, even punch. Flashes stay under 3 per second. The default.</p>
-          </div>
-          <div class="step">
-            <input class="step-radio" type="radio" name="speed" id="step-standard" value="STANDARD">
-            <label class="key step-key" for="step-standard"><span class="step-name">STANDARD</span><span class="step-wpm">8</span></label>
-            <p class="step-detail">8 WPM. Trained pace. Repeated dots reach 3.3 per second.</p>
-          </div>
-          <div class="step">
-            <input class="step-radio" type="radio" name="speed" id="step-brisk" value="BRISK">
-            <label class="key step-key" for="step-brisk"><span class="step-name">BRISK</span><span class="step-wpm">12</span></label>
-            <p class="step-detail">12 WPM. Fast punch for practiced eyes.</p>
-            <p class="step-caution">RAPID FLASH: REPEATED DOTS REACH 5.0 PER SECOND — ABOVE THE 3-HERTZ SAFETY LINE.</p>
-          </div>
-        </div>
-        <p class="speed-cap">CEILING 12 WPM. NO FASTER STEP EXISTS.</p>
-      </fieldset>
-    </section>
-
-    <!-- Share row -->
-    <section class="bay" id="share" aria-label="SHARE">
-      <div class="share-row">
-        <button class="key" type="button" data-action="copy-link">COPY LINK</button>
-        <p class="share-carries">The link holds the message and its speed. No server, no record.</p>
-      </div>
-      <p class="share-outcome" data-outcome="copied" hidden>LINK COPIED TO THE CLIPBOARD</p>
-      <p class="share-outcome" data-outcome="failed" hidden>COPY REFUSED. COPY THE ADDRESS BAR BY HAND.</p>
-      <p class="shared-loaded" hidden>MESSAGE AND SPEED LOADED FROM THE LINK.</p>
-    </section>
-
-  </main>
-
-  <footer class="plate footplate">
-    <p class="foot-line">ITU INTERNATIONAL MORSE. LAMP, SCREEN, AND TONE.</p>
-  </footer>
+  </dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>

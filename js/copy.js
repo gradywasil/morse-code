@@ -94,8 +94,8 @@ const RATE_LIST =
 export const COPY = deepFreeze({
   // The name plate -----------------------------------------------------------
   instrument: {
-    title: 'THE REGISTER',
-    subtitle: 'A MACHINE FOR SPEAKING MORSE BY LIGHT',
+    title: 'MORSE',
+    subtitle: '',
     foot: 'ITU INTERNATIONAL MORSE. LAMP, SCREEN, AND TONE.',
   },
 

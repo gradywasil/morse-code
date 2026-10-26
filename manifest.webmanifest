@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "The Morse Code Broadcaster",
-  "short_name": "The Register",
+  "name": "Morse",
+  "short_name": "Morse",
   "description": "Send Morse code with your flashlight, screen, and sound, or receive flashes through your camera.",
   "lang": "en",
   "start_url": "./",

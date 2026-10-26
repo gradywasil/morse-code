@@ -1,6 +1,6 @@
 ---
-name: The Register
-description: A punched-tape telegraph register that speaks Morse by light — dark warm instrument ground, a full-bleed paper tape, one amber lamp.
+name: Morse
+description: A compact Morse instrument with a live paper tape, readable transcript, warm dark ground, and amber controls.
 colors:
   ground: "#171008"
   ground-deep: "#0f0a05"
@@ -26,7 +26,7 @@ colors:
 typography:
   legend:
     fontFamily: "Saira Stencil One, Barlow, system-ui, sans-serif"
-    fontSize: "clamp(1.55rem, 7vw, 2.3rem)"
+    fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.05
     letterSpacing: "0.1em"
@@ -239,3 +239,47 @@ Inline: carries-line (13px cream-dim) + COPY LINK machine key; outcome prints in
 - **Don't** animate the aperture's content — it is a live picture, not chrome; and never show a frozen frame after release.
 - **Don't** announce received letters individually — words are the announcement unit (the refinement-#2 law).
 - **Don't** add loops, bounces, or entrance fades; plates seat (translate), they never dissolve (opacity belongs only to the die-press keyframe and disabled states).
+
+## Compact instrument update, 2026-10-26
+
+This section supersedes the earlier nameplate, viewport, receive-transport, and
+persistent-options descriptions. The paper, ink, and lamp palette remains.
+
+- The small existing M mark, 15px MORSE title, mode lever, and OPTIONS share a
+  single toolbar. At 320px, the title remains accessible but is visually hidden.
+  The old tagline, decorative header rule, and footer have been removed.
+- The main work area fills the remaining dynamic viewport. On portrait phones,
+  transmission gives space to a multiline composer, the tape, status, and its
+  primary action. Reception gives space to the tape, small camera preview and
+  meter, transcript, and transport. Short landscape screens use two columns.
+- Tape height is 124px, or 104px on short screens. Punch geometry remains
+  14px dot / 42px dash / 10px gap; the receiver mechanics are unchanged.
+- The transcript uses 22px mono text with 1.6 line height. It is selectable,
+  labeled for assistive technology, and scrolls internally. Appending to the
+  existing text node preserves selection. Reading back pauses automatic follow;
+  LATEST restores it. COPY is available while receiving and after completion.
+  Decoded words still use the existing polite announcer, without letter chatter.
+- Speed, sound, and sharing sit in a native OPTIONS dialog. Speed choices share
+  one row; their explanation and rapid-flash caution span the full width.
+  Safety and camera explanations use a separate native dialog with focus
+  containment and Escape recovery. Necessary warning text remains available.
+- Functional text has an 11px floor. Header, transcript actions, and dialog
+  controls have at least 44px targets; the main transport remains at least 48px.
+  Main panels are flat, the message is an inset field, and the dialog backdrop
+  is rgba(8, 5, 2, 0.82). The returning-caution caption uses cream-dim for contrast.
+- Long transcripts and dialogs own overflow, without scrolling the page.
+  Below 450px in narrow portrait, the work area can scroll to support keyboards
+  and zoom without clipping controls. Safe-area padding remains in use.
+
+Verified in headless Chrome at 320x568, 390x844, 844x390, and 1440x900. At each
+size, the page fits; speed, sound, sharing, caution cancellation, live transcript,
+copying, STOP retention, and review-position preservation pass. A 3,299-character
+transcript was used to exercise scrolling at desktop size. Captures were directly
+inspected on phone, small phone, landscape, and desktop. This is browser-emulated
+coverage, not physical-device or screen-reader acceptance.
+
+The Impeccable detector was run once. Its inherited lamp/glow warnings describe
+the retained instrument aesthetic. New undersized-text findings were corrected;
+current caption sizes and the modal backdrop are documented above. Its native
+platform context warning comes from the generated Android wrapper; this remains
+a web interface shared by both delivery paths.
