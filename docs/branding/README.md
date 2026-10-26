@@ -22,6 +22,7 @@ The original [favicon.svg](../../favicon.svg) remains the small header mark.
 The source and store exports in this folder stay out of the web payload through
 `.assetsignore`; the deployed launcher PNGs remain under their existing URLs.
 
-The local debug APK predates this icon cleanup. Regenerate Android launcher
-resources before the next APK build; replacing web icons alone does not replace
-icons embedded in an existing APK.
+The local debug APK predates this icon cleanup. The signed Play AAB now embeds
+the current artwork at all five launcher, maskable, and splash densities.
+Its 15 packaged images were compared against the generated source pixels.
+Replacing web icons alone does not replace icons embedded in an existing APK.

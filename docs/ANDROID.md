@@ -2,6 +2,18 @@
 
 ## Current status
 
+The current Play upload artifact is **`android/app-release-bundle.aab`**,
+built and signed on 2026-10-26 with the current Morse name, new domain, and clean
+launcher/splash artwork. It is version code 1, targets API 36, and retains
+package ID `com.arrangedgodly.morsecode`. Jarsigner verification passes; its
+signing certificate matches the private upload key. All 423 non-signature
+bundle entries remain unchanged by signing. Local artifact hashes and the
+public upload-certificate fingerprint are in ignored `android/play-upload-info.json`.
+
+Upload this signed file to Play Console's **Test and release > Testing >
+Internal testing > Create new release > App bundles > Upload**.
+The AAB under `app/build/outputs/bundle/release/` is an unsigned intermediate.
+
 Receiver changes were pulled through `44bdac0` on 2026-10-26. Local corrections
 cap manual exposure in real shutter-time units, detect changes within each
 sampling tile, and preserve dark gaps between dashes. Synthetic camera-frame
@@ -32,15 +44,21 @@ the resolved Android Browser Helper 2.7.4 dependency. The first build with API
 The local build uses Java 17 and Gradle 8.11.1. Gradle installed Android build
 tools 35.0.0 into the existing SDK using its accepted license. Bubblewrap was
 installed into a temporary tools directory, with no web-app dependencies added.
-No release signing key or signing certificate has been created. No Android
-device was connected when `adb devices` was checked.
+The private upload keystore now exists outside the repository at
+`C:\Users\arran\morse-code-signing\release.keystore`, alias `morsecode`.
+Its password was supplied through a private prompt and is not in source or
+command arguments. Back up this keystore and the chosen password privately;
+reuse the key for future bundle uploads. The public certificate is exported
+beside it as `upload-certificate.pem`. No Android device was connected when
+`adb devices` was checked.
 
 `gradlew.bat --no-daemon assembleRelease bundleRelease` completed successfully
 on 2026-10-26. Both release artifacts are unsigned. The generated template
 reports a non-fatal warning about its legacy manifest `package` attribute and
 Gradle deprecation notices; compilation succeeded with the pinned wrapper.
-These unsigned release outputs precede the latest branding/domain update and
-must be rebuilt before release.
+That older unsigned release APK predates the branding/domain update. The AAB
+has since been rebuilt with current assets and separately signed as described
+above; no current signed release APK has been produced.
 
 `gradlew.bat --no-daemon assembleDebug` also completed successfully. The
 installable test APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
@@ -67,10 +85,10 @@ npx --yes @bubblewrap/cli@1.27.0 update --skipVersionUpgrade
 ```
 
 Bubblewrap's setup prompts can configure/download the JDK and Android SDK.
-The signing configuration names an uncreated key outside this
+The signing configuration names the upload key outside this
 repository, `../../morse-code-signing/release.keystore`, alias `morsecode`.
-Before a release build, create or select the actual upload key, update that
-path if needed, and back up the key privately. Enter passwords only at private
+On this machine the key is already created. On another machine, restore the
+same key privately and update that path if needed. Enter passwords only at private
 prompts. For automation through Codex, use its private secret request rather
 than chat or committed files.
 
