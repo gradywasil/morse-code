@@ -121,6 +121,7 @@ export function createDecoder(options = {}) {
   let symbol = '';      // '.'/'-' characters
   let marks = [];       // 'dot'/'dash' in arrival order
   let voided = false;   // an anomaly mark invalidated this letter
+  let wordEmitted = false;
 
   const emit = (event) => {
     if (onEvent !== null) onEvent(event);
@@ -144,10 +145,23 @@ export function createDecoder(options = {}) {
     return out;
   };
 
+  const advanceGap = (ms, unitMs = unitProvider()) => {
+    assertDuration(ms, 'advanceGap(ms)');
+    const gap = classifyGap(ms, unitMs);
+    if (gap === 'symbol') return [];
+    const out = flushLetter();
+    if (gap === 'word' && !wordEmitted) {
+      wordEmitted = true;
+      out.push(...emit({ type: 'word' }));
+    }
+    return out;
+  };
+
   return {
     /** An ON period of `ms` has ended. */
     feedMark(ms) {
       assertDuration(ms, 'feedMark(ms)');
+      wordEmitted = false;
       const unitMs = unitProvider();
       assertUnit(unitMs, 'decoder unit provider');
       const mark = classifyMark(ms, unitMs);
@@ -167,11 +181,12 @@ export function createDecoder(options = {}) {
       assertUnit(unitMs, 'decoder unit provider');
       const gap = classifyGap(ms, unitMs);
       const out = emit({ type: 'gap', gap, ms });
-      if (gap === 'symbol') return out;
-      out.push(...flushLetter());
-      if (gap === 'word') out.push(...emit({ type: 'word' }));
+      out.push(...advanceGap(ms, unitMs));
       return out;
     },
+
+    /** Elapsed silence, without adding an unfinished gap to the clock tracker. */
+    advanceGap,
 
     /** The stream went quiet: emit any pending letter. */
     flush: flushLetter,
@@ -244,7 +259,7 @@ export const TRACKER = Object.freeze({
  * through `unitMs()` wired as the decoder's unit provider — the adaptive
  * loop (classify → sample → re-estimate) is the standard prior-art shape.
  */
-export function createClockTracker() {
+export function createClockTracker({ bootstrapFromGaps = false } = {}) {
   let estimate = null;        // weighted-MA unit estimate (ms)
   let samples = [];           // MA buffer (span-capped)
   let snapped = false;
@@ -255,6 +270,8 @@ export function createClockTracker() {
   let marksSeen = 0;
   let markDurations = [];     // bootstrap fallback pool
   let prevMark = null;        // {ms, mark} awaiting its pair partner
+  const openingGaps = [];
+  let gapBootstrap = false;
 
   const maValue = () => {
     if (samples.length === 0) return null;
@@ -287,6 +304,8 @@ export function createClockTracker() {
     driftCount = 0;
     markDurations = [];
     marksSeen = 0;
+    openingGaps.length = 0;
+    gapBootstrap = false;
     pushSample(pairEstimate);
     prevMark = { ms: mark.ms, mark: mark.mark };
   };
@@ -365,6 +384,27 @@ export function createClockTracker() {
         return;
       }
       if (event.type === 'gap') {
+        if (bootstrapFromGaps && estimate === null) {
+          openingGaps.push(event.ms);
+          if (marksSeen >= 3 && openingGaps.length >= 2) {
+            const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)];
+            const candidates = [1, 3].flatMap(markRatio => [1, 3, 7].map(gapRatio =>
+              (median(markDurations) / markRatio + median(openingGaps) / gapRatio) / 2)).sort((a, b) => b - a);
+            // Average both sides of the pulse: frame quantization can lengthen
+            // a dot while shortening its gap by the same amount.
+            const unit = candidates.find(candidate => {
+              const tolerance = Math.max(1000 / 30, candidate * 0.2) + 1e-6;
+              const fits = (ms, ratios) => ratios.some(ratio => Math.abs(ms - ratio * candidate) <= tolerance);
+              return candidate >= TRACKER.PAIR_ABS_MIN_MS && candidate <= TRACKER.PAIR_ABS_MAX_MS
+                && markDurations.every(ms => fits(ms, [1, 3]))
+                && openingGaps.every(ms => fits(ms, [1, 3, 7]));
+            });
+            if (unit !== undefined) {
+              pushSample(unit);
+              gapBootstrap = estimate !== null;
+            }
+          }
+        }
         // Gap samples are derived from the classification (gap/1 or gap/3)
         // — before a mark-based bootstrap exists, classifications ride the
         // DEFAULT unit and would poison the estimate. Marks first.
@@ -397,7 +437,7 @@ export function createClockTracker() {
         // (`snapped` alone is insufficient — SOS legitimately contains no
         // dot/dash adjacency, so no validated pair ever forms, yet the
         // cluster fallback estimates the unit and the text decodes.)
-        locked: estimate !== null && marksSeen >= TRACKER.LOCKED_MIN_MARKS,
+        locked: estimate !== null && (marksSeen >= TRACKER.LOCKED_MIN_MARKS || gapBootstrap),
         snapped,
         pairCount,
         samples: samples.length,

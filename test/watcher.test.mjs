@@ -300,7 +300,7 @@ for (const fps of [24, 30, 60]) {
       const rig = makeRig();
       await rig.watcher.acquire();
       const message = 'HELLO DARK ROOM';
-      const { events, durationMs } = schedule(translate(message).tokens, step);
+      const { events, durationMs, dotMs } = schedule(translate(message).tokens, step);
       const session = createReceiveSession();
       let previous = null;
       const heard = [];
@@ -313,10 +313,14 @@ for (const fps of [24, 30, 60]) {
         }
         previous = edge;
       });
-      rig.watcher.addEventListener('stats', (stats) => session.noteFrame(stats.tMs));
+      rig.watcher.addEventListener('stats', (stats) => session.noteFrame(stats.tMs, { lightOn: stats.lightOn }));
       let index = 0;
       let light = false;
       const start = 2000;
+      const openingDeadline = start + events.find(e => e.charIdx === 1 && e.on).tMs;
+      let opening = null;
+      let openingStatus = null;
+      let liveFinal = null;
       for (let frame = 0; frame * 1000 / fps < start + durationMs + SILENCE_AUTO_COMPLETE_MS + 500; frame++) {
         const t = frame * 1000 / fps;
         while (index < events.length && events[index].tMs <= t - start) {
@@ -324,6 +328,11 @@ for (const fps of [24, 30, 60]) {
         }
         rig.setPaint({ flatLevel: 100, quadrant: 255, signal: light ? 230 : 100 });
         rig.deliverFrame(t);
+        if (t < openingDeadline) {
+          openingStatus = session.status();
+          opening = openingStatus.text;
+        }
+        if (liveFinal === null && t >= start + durationMs + 2.5 * dotMs) liveFinal = session.status().text;
       }
       assert.equal(heard.length, events.length, `missing transitions: ${JSON.stringify(heard.slice(-8))}`);
       for (let i = 0; i < events.length; i++) {
@@ -331,6 +340,8 @@ for (const fps of [24, 30, 60]) {
           `edge ${i}: expected ${start + events[i].tMs}, heard ${heard[i].tMs}`);
       }
       assert.equal(session.status().text, message);
+      assert.equal(opening, 'H', `opening letter appears before E starts: ${JSON.stringify(openingStatus)}`);
+      assert.equal(liveFinal, message, 'last M appears before the five-second timeout');
       assert.equal(session.status().completed, true);
     });
   }

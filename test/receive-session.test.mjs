@@ -63,19 +63,74 @@ test('full sessions decode to exact text at every step (replay recovery)', () =>
   }
 });
 
-test('short never-locked message finalizes via the forced bootstrap', () => {
-  // LEARNER "HI": 6 marks, no dot/dash pair, cluster needs 7 — the
-  // session never locks live; completion force-bootstraps the unit and
-  // replays the whole buffer (both letters arrive as replay).
+test('live tape: H appears during its letter gap, before the next letter starts', () => {
+  for (const step of SPEED_STEP_ORDER) {
+    const periods = periodsOf(step, 'HELLO ROOM');
+    const events = [];
+    const session = createReceiveSession({ onEvent: e => events.push(e) });
+    for (const p of periods.slice(0, 7)) {
+      if (p.kind === 'mark') session.feedMark(p.ms, p.endTMs);
+      else session.feedGap(p.ms, p.endTMs);
+    }
+    const last = periods[6];
+    session.noteFrame(last.endTMs + 2.2 * last.ms, { lightOn: false });
+    assert.equal(session.status().text, 'H', step);
+    assert.equal(session.status().completed, false);
+  }
+});
+
+test('live tape: final M settles during silence and survives STOP before auto-complete', () => {
+  for (const step of SPEED_STEP_ORDER) {
+    const periods = periodsOf(step, 'HELLO ROOM');
+    const { session } = runSession(periods);
+    const unit = periods[0].ms;
+    session.noteFrame(periods.at(-1).endTMs + 2.2 * unit, { lightOn: false });
+    assert.equal(session.status().text, 'HELLO ROOM', step);
+    assert.equal(session.status().completed, false);
+    session.stop();
+    assert.equal(session.status().text, 'HELLO ROOM', step);
+  }
+});
+
+test('live tape: frame-driven letter and word completion never duplicate the record', () => {
+  const periods = periodsOf('STANDARD', 'HELLO ROOM');
+  const unit = periods[0].ms;
+  const events = [];
+  const session = createReceiveSession({ onEvent: e => events.push(e) });
+  for (const p of periods) {
+    if (p.kind === 'mark') session.feedMark(p.ms, p.endTMs);
+    else {
+      for (let gap = unit / 4; gap < p.ms; gap += unit / 4) {
+        session.noteFrame(p.endTMs - p.ms + gap, { lightOn: false });
+      }
+      session.feedGap(p.ms, p.endTMs);
+    }
+  }
+  session.noteFrame(periods.at(-1).endTMs + SILENCE_AUTO_COMPLETE_MS);
+  assert.equal(session.status().text, 'HELLO ROOM');
+  assert.equal(events.filter(e => e.type === 'letter').map(e => e.char).join(''), 'HELLOROOM');
+  assert.equal(events.filter(e => e.type === 'replay-start').length, 1);
+});
+
+test('live tape: an open flash cannot be mistaken for a letter gap or end of message', () => {
+  const periods = periodsOf('STANDARD', 'HELLO ROOM');
+  const { session, events } = runSession(periods.slice(0, -2));
+  const textBefore = session.status().text;
+  session.noteFrame(periods.at(-3).endTMs + SILENCE_AUTO_COMPLETE_MS + 1000, { lightOn: true });
+  assert.equal(session.status().text, textBefore);
+  assert.equal(events.some(e => e.type === 'complete'), false);
+});
+
+test('short all-dot message locks from marks plus gaps and settles live', () => {
   const periods = periodsOf('LEARNER', 'HI');
   const { session, events } = runSession(periods);
+  assert.equal(session.status().locked, true);
+  assert.equal(session.status().text, 'H');
   session.noteFrame(periods[periods.length - 1].endTMs + SILENCE_AUTO_COMPLETE_MS);
   const letters = events.filter((e) => e.type === 'letter');
   assert.equal(letters.length, 2);
   assert.equal(letters[0].char, 'H');
-  assert.equal(letters[0].replay, true);
   assert.equal(letters[1].char, 'I');
-  assert.equal(letters[1].replay, true);
   const done = events.find((e) => e.type === 'complete');
   assert.equal(done.text, 'HI');
   assert.equal(done.partial, false);

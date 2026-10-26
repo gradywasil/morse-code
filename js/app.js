@@ -838,7 +838,6 @@ let rxLiveWidth = 0;
 let rxCursor = RX_PUNCH.start; // next group's left, in strip px
 
 function rxResetTapeDom() {
-  rxWinWidth = 0;
   rxStrip.innerHTML = '';
   rxStrip.style.removeProperty('--strip-shift');
   rxLiveEl = null;
@@ -847,15 +846,12 @@ function rxResetTapeDom() {
   rxCursor = RX_PUNCH.start;
 }
 
-let rxWinWidth = 0; // cached at letter boundaries — a layout read per
-                    // MARK would stall edge timing mid-stream (I3 lesson)
-
 function rxUpdateShift() {
   // Keep the growing record's edge under the read-head bridge (the
   // broadcast traverse, receive way). Information parity: the shift is a
   // transform — it still applies, instantly, under the capability layers.
-  const shift = Math.max(0, rxCursor - rxWinWidth + RX_PUNCH.start + 60);
-  rxStrip.style.setProperty('--strip-shift', `${-shift}px`);
+  const edge = rxCursor + (rxLiveEl === null ? 0 : rxLiveWidth);
+  rxStrip.style.setProperty('--strip-shift', `${Math.max(RX_PUNCH.start, edge - 60)}px`);
 }
 
 function rxEnsureLiveGroup() {
@@ -888,7 +884,6 @@ function rxAppendMark(mark) {
 }
 
 function rxCompleteLetter(event) {
-  rxWinWidth = rxStrip.parentElement.clientWidth || 1; // letter boundary
   if (rxLiveEl === null) {
     // Sequence-independent rendering: replayed letters (the lock-time
     // recovery and the forced bootstrap) arrive with their marks in the
@@ -1013,7 +1008,7 @@ function onWatcherEdge(edge) {
 }
 
 function onWatcherStats(stats) {
-  if (rxSession !== null) rxSession.noteFrame(stats.tMs);
+  if (rxSession !== null) rxSession.noteFrame(stats.tMs, { lightOn: stats.lightOn });
   if (meterSaturationNote !== null) {
     meterSaturationNote.hidden = !stats.saturated;
   }
@@ -1021,6 +1016,10 @@ function onWatcherStats(stats) {
 
 function onSessionEvent(event) {
   switch (event.type) {
+    case 'replay-start':
+      rxResetTapeDom();
+      rxLastWord = '';
+      break;
     case 'mark':
       if (rxMachine.state === RECEIVE_STATES.ARMED) {
         rxMachine.dispatch(RECEIVE_EVENTS.HEARING); // light speaks → active

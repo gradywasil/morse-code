@@ -438,6 +438,12 @@ does it decode, and does it feel reliable or flaky?
 
 ## What to report back
 
+For the live ticker correction, send `HELLO ROOM` at each speed. The opening H
+should show four dots and its letter during the gap before E. Completed groups
+must keep moving through the visible tape as new letters arrive. The final M
+should appear after its letter gap, before the five-second completion timeout.
+Press STOP after M appears and confirm the completed record is retained.
+
 For the 2026-10-26 ambient-light correction, repeat R1/R2 with a steady bright
 window or lamp in another part of the preview. Then repeat in normal room
 light and a brighter room, without a sender, and confirm that the preview

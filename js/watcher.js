@@ -335,8 +335,9 @@ export function createWatcher(options = {}) {
       usingRVFC,
     };
     lastFrameTMs = tMs;
-    dispatch('stats', lastStats);
+    // Complete the period before its frame can advance the silence clock.
     if (edge) dispatch('edge', edge);
+    dispatch('stats', lastStats);
   }
 
   function startLoop() {

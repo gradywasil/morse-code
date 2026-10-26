@@ -8,17 +8,13 @@
 //   are discarded, the session is flagged PARTIAL from there. A leading
 //   gap (light off) is simply never seen — nothing to discard.
 //
-//   D9 (text gate): letters surface only once the session is LOCKED —
-//   the tracker holds a unit estimate AND the observed marks cohere
-//   with it (≥70% within one camera frame of û or 3û). Pre-lock
-//   emissions from the live decoder are unreliable — but for machine-
-//   timed senders the raw periods are sound, so at lock the session
-//   REPLAYS its buffered periods through a fresh decoder at the locked
-//   unit and then SWAPS to it: recovered letters are emitted (marked
-//   `replay:true`), the in-progress symbol carries over, and nothing is
-//   double-emitted. A session that ends unlocked with enough marks gets
-//   one forced cluster bootstrap at completion (short all-dot messages
-//   like "HI" never form a dot/dash pair).
+//   D9 (text gate): startup waits for coherent mark/gap timing. At the
+//   first lock, replay buffered periods once through a fresh decoder and
+//   rebuild the tape from its marks, letters, and spaces. Later confidence
+//   changes never replay the established record. The decoder keeps tracking
+//   the pace, and frame-driven silence settles each completed letter.
+//   A session that ends without recovery and with enough marks gets
+//   one forced cluster bootstrap at completion if timing never stabilized.
 //
 //   D9 (noise triad): SILENCE = nothing decodable heard; NOISE = marks
 //   accumulating with no coherent unit (≥8 marks, not locked); DECODING
@@ -31,7 +27,7 @@
 //   joined mid-mark OR a symbol still unresolved when the session ended.
 //
 // Timeline: feedMark/feedGap take the period length AND its end
-// timestamp (watcher edge times); noteFrame(tMs) advances the clock
+// timestamp (watcher edge times); noteFrame(tMs, {lightOn}) advances the clock
 // between periods so an open trailing silence can be measured. All
 // timestamps are the host's (performance.now-class) monotonic ms.
 
@@ -86,7 +82,7 @@ export function createReceiveSession(options = {}) {
 
   const emit = (event) => { if (onEvent !== null) onEvent(event); };
 
-  const tracker = createClockTracker();
+  const tracker = createClockTracker({ bootstrapFromGaps: true });
   let activeDecoder = createDecoder({
     unitMs: () => tracker.unitMs(),
     onEvent: (e) => tracker.observe(e),
@@ -99,8 +95,12 @@ export function createReceiveSession(options = {}) {
   let discardNextGap = lightOnAtBegin;   // D8: the gap after a truncated mark
   let firstMarkPending = lightOnAtBegin; // D8: the truncated mark itself
   let text = '';
+  let wordPending = false;
+  let recovered = false;
   let lastMarkEndTMs = null;
   let lastTimeTMs = null;
+  let lastFrameTMs = null;
+  let frameToleranceMs = SESSION.COHERENCE_FRAME_MS;
   const periodBuffer = [];               // raw {kind, ms} for the lock replay
   const markPool = [];                   // raw mark durations (coherence)
 
@@ -114,15 +114,18 @@ export function createReceiveSession(options = {}) {
   };
 
   const addToText = (e) => {
-    if (e.type === 'letter') text += e.known ? e.char : '\uFFFD';
-    else if (e.type === 'word') text += ' ';
+    if (e.type === 'letter') {
+      if (wordPending && text) text += ' ';
+      text += e.known ? e.char : '\uFFFD';
+      wordPending = false;
+    } else if (e.type === 'word') wordPending = true;
   };
 
   /** D9 coherence: share of marks within one frame of û or 3û. */
   const coherence = () => {
     if (markPool.length === 0) return 0;
     const unit = tracker.unitMs();
-    const f = SESSION.COHERENCE_FRAME_MS;
+    const f = frameToleranceMs + 1e-6;
     let hits = 0;
     for (const ms of markPool) {
       if (Math.abs(ms - unit) <= f || Math.abs(ms - 3 * unit) <= f) hits += 1;
@@ -130,24 +133,28 @@ export function createReceiveSession(options = {}) {
     return hits / markPool.length;
   };
 
-  const sessionLocked = () =>
-    tracker.status().locked && coherence() >= SESSION.COHERENCE_TARGET;
+  const sessionLocked = () => tracker.status().locked && coherence() >= SESSION.COHERENCE_TARGET;
 
   /** Run the buffered periods through a fresh decoder at the locked unit
  * and swap to it. No flush — the pending symbol carries over. */
   const replayAndSwap = (unitMs) => {
     if (periodBuffer.length === 0 || periodBuffer.length > SESSION.MAX_REPLAY_PERIODS) return;
-    const fresh = createDecoder({ unitMs: () => tracker.unitMs() });
+    let replaying = true;
+    const fresh = createDecoder({
+      unitMs: () => replaying ? unitMs : tracker.unitMs(),
+      onEvent: e => { if (!replaying) tracker.observe(e); },
+    });
+    emit({ type: 'replay-start' });
     for (const p of periodBuffer) {
       const events = p.kind === 'mark' ? fresh.feedMark(p.ms) : fresh.feedGap(p.ms);
       for (const e of events) {
-        if (e.type === 'letter' || e.type === 'word') {
-          emit({ ...e, replay: true });
-          addToText(e);
-        }
+        emit({ ...e, replay: true });
+        addToText(e);
       }
     }
     activeDecoder = fresh; // future periods continue here — no double emission
+    replaying = false;
+    periodBuffer.length = 0;
   };
 
   const updateMeter = () => {
@@ -173,8 +180,7 @@ export function createReceiveSession(options = {}) {
       return [];
     }
 
-    periodBuffer.push({ kind, ms });
-    const wasLocked = sessionLocked();
+    if (!recovered) periodBuffer.push({ kind, ms });
     const events = kind === 'mark' ? activeDecoder.feedMark(ms) : activeDecoder.feedGap(ms);
     if (kind === 'mark') {
       markPool.push(ms);
@@ -188,13 +194,14 @@ export function createReceiveSession(options = {}) {
         out.push(e);
       }
     }
-    const swappedThisFeed = !wasLocked && sessionLocked();
+    const swappedThisFeed = !recovered && sessionLocked();
     if (swappedThisFeed) {
       // The lock moment: recover the pre-lock record, then continue live.
       // The retired decoder's letters in THIS feed were re-derived by the
       // replay — emitting them again would double-count.
       replayAndSwap(tracker.unitMs());
-    } else if (sessionLocked()) {
+      recovered = true;
+    } else if (recovered) {
       for (const e of events) {
         if (e.type === 'letter' || e.type === 'word') {
           emit(e);
@@ -235,25 +242,24 @@ export function createReceiveSession(options = {}) {
       // of guessing — the honest void, flagged PARTIAL.
       for (const e of activeDecoder.flush()) {
         if (e.type === 'letter' || e.type === 'word') {
-          if (sessionLocked()) {
+          if (recovered) {
             emit(e);
             addToText(e);
           }
         }
       }
     }
-    if (!sessionLocked() && text === '') {
+    if (!recovered && text === '') {
       // Never locked: one honest forced bootstrap before giving up.
       const unit = forcedUnit();
       if (unit !== null && periodBuffer.length <= SESSION.MAX_REPLAY_PERIODS) {
+        emit({ type: 'replay-start' });
         const fresh = createDecoder({ unitMs: unit });
         for (const p of periodBuffer) {
           const events = p.kind === 'mark' ? fresh.feedMark(p.ms) : fresh.feedGap(p.ms);
           for (const e of events) {
-            if (e.type === 'letter' || e.type === 'word') {
-              emit({ ...e, replay: true });
-              addToText(e);
-            }
+            emit({ ...e, replay: true });
+            addToText(e);
           }
         }
         if (source === 'silence') {
@@ -283,12 +289,25 @@ export function createReceiveSession(options = {}) {
     feedGap: (ms, endTMs) => feed('gap', ms, endTMs),
 
     /** Host clock advance (a frame arrived at `tMs`). Drives auto-complete. */
-    noteFrame(tMs) {
+    noteFrame(tMs, { lightOn = false } = {}) {
       if (completed) return;
       if (typeof tMs !== 'number' || !Number.isFinite(tMs)) {
         throw new TypeError('noteFrame(tMs) expects a finite timestamp');
       }
+      const frameMs = lastFrameTMs === null ? 0 : tMs - lastFrameTMs;
+      if (frameMs > 0 && frameMs <= 1000 / 15) {
+        frameToleranceMs = Math.max(SESSION.COHERENCE_FRAME_MS, frameMs);
+      }
+      lastFrameTMs = tMs;
       lastTimeTMs = Math.max(lastTimeTMs ?? tMs, tMs);
+      if (lightOn || lastMarkEndTMs === null) return;
+      const silenceMs = lastTimeTMs - lastMarkEndTMs;
+      if (silenceMs > 0 && recovered) {
+        for (const e of activeDecoder.advanceGap(silenceMs)) {
+          emit(e);
+          addToText(e);
+        }
+      }
       if (lastMarkEndTMs !== null
           && lastTimeTMs - lastMarkEndTMs >= SILENCE_AUTO_COMPLETE_MS) {
         complete('silence');

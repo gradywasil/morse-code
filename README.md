@@ -58,7 +58,7 @@ Every glow and motion effect degrades cleanly under `prefers-reduced-motion` and
 
 ## Running the tests
 
-573 tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, and the privacy scan. Camera-frame simulations also verify exact received text at 24, 30, and 60 fps across all three speeds with a stationary bright background:
+579 tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, the live ticker, and the privacy scan. Camera-frame simulations also verify exact received text at 24, 30, and 60 fps across all three speeds with a stationary bright background, including the opening H and final M appearing before the next letter or completion timeout:
 
 ```bash
 npm test
