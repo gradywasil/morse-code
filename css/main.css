@@ -1491,7 +1491,7 @@ body[data-state='receive-error'] .keys-receive-idle { display: flex; }
 .screen-line { font: 500 12px/1.4 var(--font-body); letter-spacing: 0.02em; text-align: left; }
 body[data-mode='receive'] #eye { flex: none; grid-template-columns: 76px minmax(0, 1fr); gap: 14px; }
 .aperture { width: 76px; max-width: none; }
-.aperture-shutter::after { content: 'CAMERA OFF'; font-size: 11px; letter-spacing: 0.04em; }
+.aperture-shutter::after { content: 'CAMERA OFF'; padding: 4px; text-align: center; line-height: 1.35; font-size: 11px; letter-spacing: 0.04em; }
 .meter-line { font-size: 12px; margin: 0 0 4px; }
 .meter-hint, .meter-saturated, .meter-partial { font-size: 12px; line-height: 1.4; margin-top: 4px; }
 #received-message { display: none; }

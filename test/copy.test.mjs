@@ -238,7 +238,7 @@ test('why-camera: the two privacy facts survive verbatim, and it precedes the pr
   const joined = `${COPY.whyCamera.title} ${COPY.whyCamera.lines.join(' ')}`.toLowerCase();
   // fact 1 — browsers expose the torch only through the camera stream
   assert.ok(joined.includes('camera stream'), 'must state the torch-only-through-camera-stream fact');
-  assert.ok(joined.includes('torch'), 'must name the torch');
+  assert.ok(joined.includes('flashlight'), 'must name the flashlight');
   // fact 2 — no video is recorded or sent (exact facts)
   assert.ok(joined.includes('no video is recorded'), 'must state: no video is recorded');
   assert.ok(joined.includes('no video is sent'), 'must state: no video is sent');
@@ -255,12 +255,12 @@ test('first-visit notice is distinct from the returning re-arm beat', () => {
   assert.ok(COPY.notice.firstVisit.length > 0 && COPY.notice.returning.length > 0);
 });
 
-test('screen mode is framed positively (hold-it-up energy, no consolation)', () => {
-  assert.match(COPY.screenMode.line, /HOLD IT UP/);
-  assert.match(COPY.screenMode.line, /LAMP/);
+test('screen mode explains the screen output and where to aim it', () => {
+  assert.match(COPY.screenMode.line, /FACE IT TOWARD THE RECEIVER/);
+  assert.match(COPY.screenMode.line, /YOUR SCREEN SENDS THE FLASHES/);
   assert.match(COPY.framings[ARM_FRAMINGS.SCREEN_POSITIVE], /SCREEN LIGHT/);
-  assert.match(COPY.states[STATES.SCREEN_MODE].line, /HOLD IT UP/);
-  assert.match(COPY.states[STATES.UNSUPPORTED].line, /SCREEN CARRIES THE SIGNAL/);
+  assert.match(COPY.states[STATES.SCREEN_MODE].line, /FACE IT TOWARD THE RECEIVER/);
+  assert.match(COPY.states[STATES.UNSUPPORTED].line, /USE YOUR SCREEN TO SEND/);
 });
 
 test('takeover line keeps the committed wording: light source lost, continuing on screen', () => {
@@ -394,5 +394,5 @@ test('U1: register voice holds over the receive pack (no exclamations, ≤120, n
   // Honesty facts present and verbatim.
   const why = COPY.receive.whyCamera.lines.join(' ');
   assert.ok(why.includes('Nothing is recorded. Nothing is sent anywhere.'));
-  assert.ok(why.includes('The eye closes the moment you stop.'));
+  assert.ok(why.includes('The camera closes the moment you stop.'));
 });

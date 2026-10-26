@@ -96,7 +96,7 @@ export const COPY = deepFreeze({
   instrument: {
     title: 'MORSE',
     subtitle: '',
-    foot: 'ITU INTERNATIONAL MORSE. LAMP, SCREEN, AND TONE.',
+    foot: 'ITU INTERNATIONAL MORSE. FLASHLIGHT, SCREEN, AND TONE.',
   },
 
   // The composer -------------------------------------------------------------
@@ -122,7 +122,7 @@ export const COPY = deepFreeze({
     tone: 'TONE',
     toneOff: 'TONE OFF',
     switchScreen: 'SWITCH TO SCREEN',
-    switchHint: 'LAMP NOT FLASHING? THE SCREEN CAN TAKE OVER MID-MESSAGE.',
+    switchHint: 'FLASHLIGHT NOT FLASHING? THE SCREEN CAN TAKE OVER MID-MESSAGE.',
   },
 
   // The speed control --------------------------------------------------------
@@ -166,11 +166,11 @@ export const COPY = deepFreeze({
   // The photosensitivity hazard plate ----------------------------------------
   hazard: {
     title: 'CAUTION — FLASHING LIGHT',
-    pictogramAlt: 'Warning pictogram: a lamp emitting rapid flashes.',
+    pictogramAlt: 'Warning pictogram: a flashlight emitting rapid flashes.',
     imperative: 'DO NOT WATCH IF FLASHING LIGHT HAS EVER TRIGGERED A SEIZURE.',
     advisory:
-      'This instrument speaks by flashing light. Anyone photosensitive should ' +
-      'not watch the lamp or the screen.',
+      'Morse sends messages with flashing light. Anyone photosensitive should ' +
+      'not watch the flashlight or the screen.',
     steps: `Speed steps: ${STEP_LIST} words per minute.`,
     rates: `Repeated dots flash ${RATE_LIST} times per second across those steps.`,
     threshold: `The safety line is ${PHOTOSAFETY_THRESHOLD_HZ} flashes per second.`,
@@ -183,8 +183,8 @@ export const COPY = deepFreeze({
   whyCamera: {
     title: 'WHY THE CAMERA PROMPT',
     lines: [
-      'Browsers expose the torch only through a live camera stream.',
-      'The prompt is the only door to the lamp.',
+      'Browsers expose the flashlight only through a live camera stream.',
+      'Allow camera access to use your flashlight.',
       'No video is recorded. No video is sent anywhere.',
       'The camera closes the moment the broadcast ends.',
     ],
@@ -203,7 +203,7 @@ export const COPY = deepFreeze({
     },
     [STATES.ARMING]: {
       legend: 'ARMING',
-      line: 'TESTING THE LAMP. IT MAY BLINK ONCE.',
+      line: 'TESTING THE FLASHLIGHT. IT MAY BLINK ONCE.',
     },
     [STATES.AWAITING_PERMISSION]: {
       legend: 'AWAITING PERMISSION',
@@ -211,19 +211,19 @@ export const COPY = deepFreeze({
     },
     [STATES.PERMISSION_DENIED]: {
       legend: 'PERMISSION DENIED',
-      line: 'CAMERA REFUSED. THE TORCH CANNOT LIGHT WITHOUT IT.',
+      line: 'CAMERA REFUSED. THE FLASHLIGHT CANNOT LIGHT WITHOUT IT.',
     },
     [STATES.UNSUPPORTED]: {
-      legend: 'NO TORCH',
-      line: 'NO LAMP TO DRIVE. THE SCREEN CARRIES THE SIGNAL.',
+      legend: 'NO FLASHLIGHT',
+      line: 'FLASHLIGHT UNAVAILABLE. USE YOUR SCREEN TO SEND.',
     },
     [STATES.TORCH_READY]: {
-      legend: 'TORCH READY',
-      line: 'LAMP ARMED. STANDING BY FOR THE WORD.',
+      legend: 'FLASHLIGHT READY',
+      line: 'YOUR FLASHLIGHT IS READY TO SEND.',
     },
     [STATES.SCREEN_MODE]: {
       legend: 'SCREEN READY',
-      line: 'SCREEN ARMED. HOLD IT UP — IT IS THE LAMP.',
+      line: 'SCREEN READY. FACE IT TOWARD THE RECEIVER.',
     },
     [STATES.READY]: {
       legend: 'READY',
@@ -231,7 +231,7 @@ export const COPY = deepFreeze({
     },
     [STATES.BROADCASTING]: {
       legend: 'SENDING',
-      line: 'TORCH LIGHT SPEAKS THE TAPE.',
+      line: 'YOUR FLASHLIGHT IS SENDING THE MESSAGE.',
     },
     [STATES.BROADCASTING_ON_SCREEN]: {
       legend: 'SENDING',
@@ -259,22 +259,22 @@ export const COPY = deepFreeze({
   denied: {
     offer: 'BROADCAST BY SCREEN LIGHT',
     offerLine: 'THE SCREEN NEEDS NO PERMISSION AND SPEAKS THE SAME MORSE.',
-    retry: 'RETRY THE TORCH',
+    retry: 'RETRY THE FLASHLIGHT',
     hint: 'Refused by choice? Regrant camera access in the browser site settings, then retry.',
   },
 
   // The positive screen framing ------------------------------------------------
   screenMode: {
-    line: 'THE SCREEN IS THE LAMP. HOLD IT UP FACING THE ROOM.',
+    line: 'YOUR SCREEN SENDS THE FLASHES. FACE IT TOWARD THE RECEIVER.',
   },
 
   // One line per ARM_MATRIX framing (F8 exports the vocabulary) ----------------
   framings: {
-    [ARM_FRAMINGS.TORCH]: 'TORCH PATH OPEN. THE LAMP ANSWERS.',
+    [ARM_FRAMINGS.TORCH]: 'YOUR FLASHLIGHT IS READY.',
     [ARM_FRAMINGS.SCREEN_POSITIVE]: 'THIS DEVICE BROADCASTS BY SCREEN LIGHT.',
     [ARM_FRAMINGS.DENIED_OFFER_SCREEN]: 'CAMERA REFUSED. THE SCREEN IS OFFERED.',
     [ARM_FRAMINGS.WHY_CAMERA]: 'THE CAMERA QUESTION EXPLAINED BEFORE THE PROMPT.',
-    [ARM_FRAMINGS.ARMING]: 'ARMING. THE LAMP IS UNDER TEST.',
+    [ARM_FRAMINGS.ARMING]: 'ARMING. THE FLASHLIGHT IS UNDER TEST.',
   },
 
   // One machine line per F3 fallback reason (+ generic for the unknown) --------
@@ -285,11 +285,11 @@ export const COPY = deepFreeze({
     [TORCH_FALLBACK_REASONS.CAMERA_UNAVAILABLE]: 'CAMERA IN USE OR UNREACHABLE RIGHT NOW.',
     [TORCH_FALLBACK_REASONS.GUM_FAILED]: 'THE CAMERA REQUEST FAILED IN THE BROWSER.',
     [TORCH_FALLBACK_REASONS.NO_VIDEO_TRACK]: 'THE CAMERA RETURNED NO VIDEO PATH.',
-    [TORCH_FALLBACK_REASONS.NO_TORCH_CAPABILITY]: 'THE CAMERA REPORTS NO TORCH CONTROL.',
-    [TORCH_FALLBACK_REASONS.PROBE_ON_FAILED]: 'THE LAMP REFUSED ITS TEST LIGHTING.',
-    [TORCH_FALLBACK_REASONS.PROBE_OFF_FAILED]: 'THE LAMP WOULD NOT EXTINGUISH ON COMMAND.',
-    [TORCH_FALLBACK_REASONS.PROBE_TIMEOUT]: 'THE LAMP NEVER ANSWERED ITS TEST IN TIME.',
-    generic: 'THE TORCH PATH DID NOT ANSWER.',
+    [TORCH_FALLBACK_REASONS.NO_TORCH_CAPABILITY]: 'THIS CAMERA DOES NOT SUPPORT FLASHLIGHT CONTROL.',
+    [TORCH_FALLBACK_REASONS.PROBE_ON_FAILED]: 'YOUR FLASHLIGHT COULD NOT TURN ON.',
+    [TORCH_FALLBACK_REASONS.PROBE_OFF_FAILED]: 'YOUR FLASHLIGHT COULD NOT TURN OFF.',
+    [TORCH_FALLBACK_REASONS.PROBE_TIMEOUT]: 'YOUR FLASHLIGHT TEST TIMED OUT.',
+    generic: 'YOUR FLASHLIGHT COULD NOT START.',
   },
 
   // The pre-broadcast choreography (renders in `ready`) ------------------------
@@ -301,10 +301,10 @@ export const COPY = deepFreeze({
 
   // Broadcast status + takeover notes ------------------------------------------
   broadcast: {
-    torch: 'SENDING BY TORCH LIGHT.',
+    torch: 'SENDING WITH YOUR FLASHLIGHT.',
     screen: 'SENDING BY SCREEN LIGHT.',
     takeoverTorchLost: 'LIGHT SOURCE LOST — CONTINUING ON SCREEN.',
-    takeoverManualSwitch: 'TORCH SET ASIDE — CONTINUING ON SCREEN.',
+    takeoverManualSwitch: 'FLASHLIGHT SET ASIDE — CONTINUING ON SCREEN.',
     takeoverPositionKept: 'POSITION KEPT. THE MESSAGE LOSES NOTHING.',
   },
 
@@ -317,7 +317,7 @@ export const COPY = deepFreeze({
 
   // Faults -------------------------------------------------------------------------
   error: {
-    arm: 'ARM FAULT. THE TORCH PATH FAILED.',
+    arm: 'YOUR FLASHLIGHT COULD NOT START. TRY AGAIN OR USE YOUR SCREEN.',
     broadcast: 'BROADCAST FAULT. THE RUN STOPPED EARLY.',
     internal: 'INTERNAL FAULT.',
     recover: 'THE MESSAGE SURVIVES. REPLAY, RETRY, OR RESET.',
@@ -350,10 +350,10 @@ export const COPY = deepFreeze({
     whyCamera: {
       title: 'WHY THE CAMERA PROMPT',
       lines: [
-        'The register listens through the camera.',
+        'Your camera detects the flashing light.',
         'It watches light levels in a live view.',
         'Nothing is recorded. Nothing is sent anywhere.',
-        'The eye closes the moment you stop.',
+        'The camera closes the moment you stop.',
       ],
       proceed: 'BEGIN LISTENING',
     },
@@ -366,10 +366,10 @@ export const COPY = deepFreeze({
       },
       [RECEIVE_STATES.PREFLIGHT]: {
         legend: 'PREFLIGHT',
-        line: 'THE GATE BEFORE THE EYE OPENS.',
+        line: 'CHECK CAMERA ACCESS BEFORE LISTENING.',
       },
       [RECEIVE_STATES.ARMING]: {
-        legend: 'OPENING THE EYE',
+        legend: 'STARTING CAMERA',
         line: 'THE CAMERA QUESTION IS WITH THE BROWSER.',
       },
       [RECEIVE_STATES.DENIED]: {
@@ -377,12 +377,12 @@ export const COPY = deepFreeze({
         line: 'CAMERA REFUSED. MORSE NEEDS IT TO LISTEN.',
       },
       [RECEIVE_STATES.UNSUPPORTED]: {
-        legend: 'NO EYE',
+        legend: 'NO CAMERA',
         line: 'THIS CONTEXT OFFERS NO CAMERA. THE BROADCAST HALF STILL SPEAKS.',
       },
       [RECEIVE_STATES.ARMED]: {
         legend: 'LISTENING',
-        line: 'THE EYE IS OPEN. AIM AT THE LIGHT.',
+        line: 'CAMERA ON. AIM AT THE FLASHING LIGHT.',
       },
       [RECEIVE_STATES.ACTIVE]: {
         legend: 'RECEIVING',
@@ -394,7 +394,7 @@ export const COPY = deepFreeze({
       },
       [RECEIVE_STATES.ERROR]: {
         legend: 'FAULT',
-        line: 'THE EYE FAILED. THE RECORD STANDS.',
+        line: 'CAMERA ERROR. YOUR RECEIVED TEXT IS KEPT.',
       },
     },
 
