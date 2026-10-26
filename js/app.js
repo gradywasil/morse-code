@@ -306,7 +306,10 @@ function currentMarkCount() {
 }
 
 function renderComposerNotes() {
-  const { unknown } = translate(messageInput.value);
+  const { unknown, tokens } = translate(messageInput.value);
+  const seconds = Math.ceil(schedule(tokens, stepId).durationMs / 1000);
+  const duration = seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  $('#message-duration').textContent = seconds ? `${duration} TO SEND` : '';
   const hasUnknown = unknown.length > 0;
   unknownChars.textContent = unknown.map((u) => u.char).join(' ');
   unknownFlags.hidden = !hasUnknown;
@@ -763,6 +766,7 @@ for (const radio of speedRadios) {
     if (radio.checked && SPEED_STEPS[radio.value]) {
       stepId = radio.value;
       $('#options-speed').textContent = `${SPEED_STEPS[stepId].wpm} WPM`;
+      renderComposerNotes();
       requestHashWrite();
     }
   });

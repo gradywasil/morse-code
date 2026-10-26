@@ -249,12 +249,12 @@ persistent-options descriptions. The paper, ink, and lamp palette remains.
   single toolbar. At 320px, the title remains accessible but is visually hidden.
   The old tagline, decorative header rule, and footer have been removed.
 - The main work area fills the remaining dynamic viewport. On portrait phones,
-  transmission gives space to a multiline composer, the tape, status, and its
+  transmission groups a compact composer, the tape, status, and its
   primary action. Reception gives space to the tape, small camera preview and
   meter, transcript, and transport. Short landscape screens use two columns.
 - Tape height is 124px, or 104px on short screens. Punch geometry remains
   14px dot / 42px dash / 10px gap; the receiver mechanics are unchanged.
-- The transcript uses 22px mono text with 1.6 line height. It is selectable,
+- The transcript uses 20px mono text with 1.6 line height. It is selectable,
   labeled for assistive technology, and scrolls internally. Appending to the
   existing text node preserves selection. Reading back pauses automatic follow;
   LATEST restores it. COPY is available while receiving and after completion.
@@ -283,3 +283,31 @@ the retained instrument aesthetic. New undersized-text findings were corrected;
 current caption sizes and the modal backdrop are documented above. Its native
 platform context warning comes from the generated Android wrapper; this remains
 a web interface shared by both delivery paths.
+
+### Short-message refinement
+
+The toolbar and work area have a 720px maximum width. Portrait layouts center
+the working controls as a group instead of stretching the composer to consume
+spare height. The full-width paper band remains the main visual element.
+
+The composer is a centered, 20px mono slot, 96px minimum height with a 156px
+ceiling. On screens at most 650px high it uses 18px text and an 80–112px range.
+Browsers supporting `field-sizing: content` grow the field inside these bounds;
+others keep the compact fixed height and scroll internally. Its label is SHORT
+MESSAGE. A quiet caption encourages a few words; the adjacent send duration
+comes from the same schedule and selected speed used for broadcasting. Longer
+text is retained. Focus gives the slot an amber border and a narrow amber ring.
+
+The transcript has a 176px flex basis and 124px minimum height, retaining its
+selectable text, internal scrolling, review hold, LATEST, and live COPY controls.
+Keyboard-height portrait work areas align from the top and scroll internally,
+so centered overflowing content cannot hide the first control.
+
+Key presses take 130ms on the existing snap curve, move down 2px, and compress
+to 98%, replacing the raised shadow with an inset shadow. Reduced motion and
+save-data remove the movement while retaining the pressed border and shadow.
+No idle animation or additional flashing is introduced.
+
+The original SVG mark also has direct 1024px and 512px PNG exports in
+`docs/branding`. The Google Play export has an opaque square background so the
+store can apply its own outer mask. These files are excluded from web deployment.

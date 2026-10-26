@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#171008">
   <link rel="manifest" href="manifest.webmanifest">
-  <title>THE REGISTER — A MACHINE FOR SPEAKING MORSE BY LIGHT</title>
+  <title>Morse · Send &amp; Receive</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -42,10 +42,11 @@
 
     <!-- The composer -->
     <section class="bay" id="composer" aria-label="MESSAGE">
-      <label class="legend" for="message">MESSAGE</label>
-      <textarea id="message" class="message-input" rows="3" inputmode="text"
+      <label class="legend" for="message">SHORT MESSAGE</label>
+      <textarea id="message" class="message-input" rows="1" inputmode="text" aria-describedby="message-hint message-duration"
                 autocomplete="off" spellcheck="false"
-                placeholder="TYPE THE MESSAGE TO SEND">HELLO DARK ROOM</textarea>
+                placeholder="A FEW WORDS…">HELLO DARK ROOM</textarea>
+      <div class="composer-caption"><p id="message-hint">A few words travel best.</p><output id="message-duration" for="message" aria-live="off"></output></div>
       <p class="tape-flag" id="unknown-flags" hidden>NO MORSE SIGN FOR: <span class="flag-chars"></span></p>
       <p class="tape-empty" id="empty-note" hidden>EMPTY TAPE. TYPE A MESSAGE TO BROADCAST.</p>
       <p class="flag-note" id="flag-note" hidden>Characters without a Morse sign stay on the tape, unspoken.</p>

@@ -92,6 +92,9 @@ launcher icons are included. A Bubblewrap project targets
 An installable debug APK is available locally for device testing.
 Release signing, domain verification, and device acceptance remain open.
 
+High-resolution exports of the punched-tape M are in [docs/branding](docs/branding/README.md),
+including a 1024px PNG and a separate square 512px Google Play listing icon.
+
 ```
 index.html      the app — open it in a browser
 favicon.*       the punched-tape favicon (svg + ico + apple-touch)

@@ -48,6 +48,13 @@ letters until the user scrolls back, then holds that reading position until
 LATEST is pressed. The transcript is memory-only and clears on a new listen.
 The shared web UI also runs in the Android wrapper.
 
+Short messages are the primary use, clarified by the user on 2026-10-26.
+The centered composer stays compact and shows the scheduled send duration at
+the selected speed. It encourages a few words without truncating longer input
+or shared messages. The received transcript is also compact, with internal
+scrolling for longer records. Key presses use brief mechanical feedback, with
+movement removed for reduced-motion and save-data preferences.
+
 ## Evidence on Hand
 
 The approved scoping briefs are the product-truth sources: `docs/ultron/town-hall.md` (run 1 — broadcast) and `docs/ultron/run2-receiver/town-hall.md` (run 2 — receiver, approved 2026-09-01). The run-1 device-test and deploy handovers exist at `docs/DEVICE-TEST.md` / `docs/DEPLOY.md` (results user-owned). No real content, imagery, testimonials, or device-test data exists yet; torch device-support evidence came from run-1 research; receiver sampling/AE/clock-recovery evidence is expected from run-2 research and must not be invented.
