@@ -9,3 +9,11 @@ node_modules/
 
 # Wrangler
 .wrangler/
+
+# Generated Android project, signing keys, and build outputs
+android/*
+!android/twa-manifest.json
+*.keystore
+*.jks
+*.apk
+*.aab

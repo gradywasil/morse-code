@@ -58,7 +58,7 @@ Every glow and motion effect degrades cleanly under `prefers-reduced-motion` and
 
 ## Running the tests
 
-559 unit tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, and the privacy scan:
+573 tests cover the translator, timing engine, channels, conductor, state machines, share-hash round-trips, the decoder, the clock recovery, the session semantics, the camera watcher, and the privacy scan. Camera-frame simulations also verify exact received text at 24, 30, and 60 fps across all three speeds with a stationary bright background:
 
 ```bash
 npm test
@@ -77,6 +77,13 @@ npm test
 **The rhythm feels off on my phone.** Torch timing is tuned with a 120 ms lead ([`js/conductor.js`](js/conductor.js)); if marks blur or drag on your device, [docs/DEVICE-TEST.md](docs/DEVICE-TEST.md) §7 explains how to report it and retune.
 
 ## Project layout
+
+Android packaging preparation and the remaining Bubblewrap signing/domain steps
+are documented in [docs/ANDROID.md](docs/ANDROID.md). The linked web manifest and
+launcher icons are included. A Bubblewrap project targets
+`morsecode.graydonwasil.com`; local unsigned APK/AAB compilation succeeds.
+An installable debug APK is available locally for device testing.
+Release signing, domain verification, and device acceptance remain open.
 
 ```
 index.html      the app — open it in a browser

@@ -10,10 +10,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { translate } from '../js/morse.js';
+import { schedule, SPEED_STEP_ORDER } from '../js/schedule.js';
+import { createReceiveSession, SILENCE_AUTO_COMPLETE_MS } from '../js/receive-session.js';
 
 import {
   SAMPLE_GRID, ROLLING_WINDOW_MS, CONTRAST_GATE, CAPS_DELAY_MS,
-  EXPOSURE_LOCK_FRACTION, WATCHER_STATES, createWatcher,
+  MAX_EXPOSURE_TIME, WATCHER_STATES, createWatcher,
 } from '../js/watcher.js';
 
 const FRAME_MS = 1000 / 30;
@@ -21,7 +24,7 @@ const FRAME_MS = 1000 / 30;
 // Flush the microtask queue so async posture chains settle before asserts.
 const flush = () => new Promise((r) => setImmediate(r));
 
-function makeRig({ withRVFC = true, caps = {}, gumError = null, secureContext = true } = {}) {
+function makeRig({ withRVFC = true, caps = {}, settings = {}, gumError = null, secureContext = true } = {}) {
   let nowMs = 0;
   const timerQueue = [];
   const timers = {
@@ -53,6 +56,7 @@ function makeRig({ withRVFC = true, caps = {}, gumError = null, secureContext = 
         for (let px = 0; px < w; px++) {
           let level = paint.flatLevel;
           if (paint.quadrant && px < 8 && py < 8) level = paint.quadrant;
+          if (paint.signal !== undefined && px >= 24 && py >= 24) level = paint.signal;
           const i = (py * w + px) * 4;
           data[i] = level; data[i + 1] = level; data[i + 2] = level; data[i + 3] = 255;
         }
@@ -88,7 +92,7 @@ function makeRig({ withRVFC = true, caps = {}, gumError = null, secureContext = 
   const track = {
     getCapabilities: async () => caps,
     applyConstraints: async (c) => { applyCalls.push(c); },
-    getSettings: async () => ({}),
+    getSettings: async () => settings,
     addEventListener: (n, fn) => { trackListeners[n] = fn; },
     stops: 0,
     stop: () => { track.stops += 1; },
@@ -229,7 +233,7 @@ test('contrast gate: flat scene reports not-hearing and emits nothing', async ()
   assert.equal(edges.length, 0);
 });
 
-test('ROI tracks the brightest tile, not the whole-frame mean', async () => {
+test('quiet ROI diagnostics show the brightest tile without inventing contrast', async () => {
   const rig = makeRig();
   await rig.watcher.acquire();
   rig.setPaint({ flatLevel: 40, quadrant: 210 });
@@ -247,6 +251,90 @@ test('clipping: a blown-out frame reports saturation', async () => {
   assert.equal(stats.saturated, true);
   assert.equal(stats.clippingFraction, 1);
 });
+
+test('ambient-light regression: exposure never increases an already short shutter and restores its original setting', async () => {
+  const rig = makeRig({
+    caps: { exposureMode: ['continuous', 'manual'], exposureTime: { min: 1, max: 1000000, step: 1 } },
+    settings: { exposureMode: 'continuous', exposureTime: 40 },
+  });
+  await rig.watcher.acquire();
+  rig.advance(CAPS_DELAY_MS + 1);
+  await flush();
+  const shutter = rig.applyCalls.find((c) => c.advanced[0].exposureTime !== undefined);
+  assert.ok(shutter.advanced[0].exposureTime <= 40, 'do not turn a 4 ms shutter into seconds of exposure');
+  rig.watcher.stop();
+  assert.deepEqual(rig.applyCalls.at(-1), { advanced: [{ exposureMode: 'continuous', exposureTime: 40 }] });
+});
+
+test('ambient-light regression: a steady bright background cannot hide a flashing source', async () => {
+  const rig = makeRig();
+  await rig.watcher.acquire();
+  const edges = [];
+  rig.watcher.addEventListener('edge', (e) => edges.push(e));
+  let t = 0;
+  for (const signal of [40, 180, 40]) {
+    rig.setPaint({ flatLevel: 40, quadrant: 255, signal });
+    for (let i = 0; i < 30; i++) rig.deliverFrame(t++ * FRAME_MS);
+  }
+  assert.deepEqual(edges.map((e) => e.on), [true, false]);
+});
+
+test('ambient-light regression: a sustained light still emits OFF after the baseline window fills', async () => {
+  const rig = makeRig();
+  await rig.watcher.acquire();
+  const edges = [];
+  rig.watcher.addEventListener('edge', (e) => edges.push(e));
+  let t = warmUp(rig);
+  for (const level of [200, 40]) {
+    rig.setPaint({ flatLevel: level });
+    for (let i = 0; i < 90; i++) rig.deliverFrame(t + i * FRAME_MS);
+    t += 90 * FRAME_MS;
+  }
+  assert.deepEqual(edges.map((e) => e.on), [true, false]);
+  assert.equal(rig.watcher.status().lightOn, false);
+});
+
+for (const fps of [24, 30, 60]) {
+  for (const step of SPEED_STEP_ORDER) {
+    test(`sampled camera frames decode exact text at ${fps} fps / ${step} behind a steady highlight`, async () => {
+      const rig = makeRig();
+      await rig.watcher.acquire();
+      const message = 'HELLO DARK ROOM';
+      const { events, durationMs } = schedule(translate(message).tokens, step);
+      const session = createReceiveSession();
+      let previous = null;
+      const heard = [];
+      rig.watcher.addEventListener('edge', (edge) => {
+        heard.push(edge);
+        if (previous !== null) {
+          const ms = edge.tMs - previous.tMs;
+          if (edge.on) session.feedGap(ms, edge.tMs);
+          else session.feedMark(ms, edge.tMs);
+        }
+        previous = edge;
+      });
+      rig.watcher.addEventListener('stats', (stats) => session.noteFrame(stats.tMs));
+      let index = 0;
+      let light = false;
+      const start = 2000;
+      for (let frame = 0; frame * 1000 / fps < start + durationMs + SILENCE_AUTO_COMPLETE_MS + 500; frame++) {
+        const t = frame * 1000 / fps;
+        while (index < events.length && events[index].tMs <= t - start) {
+          light = events[index++].on;
+        }
+        rig.setPaint({ flatLevel: 100, quadrant: 255, signal: light ? 230 : 100 });
+        rig.deliverFrame(t);
+      }
+      assert.equal(heard.length, events.length, `missing transitions: ${JSON.stringify(heard.slice(-8))}`);
+      for (let i = 0; i < events.length; i++) {
+        assert.ok(Math.abs(heard[i].tMs - start - events[i].tMs) <= 1000 / fps,
+          `edge ${i}: expected ${start + events[i].tMs}, heard ${heard[i].tMs}`);
+      }
+      assert.equal(session.status().text, message);
+      assert.equal(session.status().completed, true);
+    });
+  }
+}
 
 test('dropped frames are counted and flag the next edge low-confidence', async () => {
   const rig = makeRig();
@@ -343,7 +431,7 @@ test('stop(): camera released, aperture dark, canvas wiped, exposure reset', asy
   assert.deepEqual(last, { advanced: [{ exposureMode: 'continuous' }] });
 });
 
-test('exposure posture D5: manual lock where advertised, target from fraction', async () => {
+test('manual shutter is capped in real time units and respects the device minimum', async () => {
   const rig = makeRig({
     caps: {
       exposureMode: ['continuous', 'manual'],
@@ -354,7 +442,7 @@ test('exposure posture D5: manual lock where advertised, target from fraction', 
   rig.advance(CAPS_DELAY_MS + 1);
   await flush();
   assert.deepEqual(rig.applyCalls[0], { advanced: [{ exposureMode: 'manual' }] });
-  const target = Math.max(100, Math.min(10000, Math.round(10000 * EXPOSURE_LOCK_FRACTION)));
+  const target = Math.max(100, MAX_EXPOSURE_TIME);
   assert.deepEqual(rig.applyCalls[1], { advanced: [{ exposureTime: target }] });
 });
 
@@ -373,6 +461,35 @@ test('no exposure caps anywhere (Safari/Firefox): zero constraint calls', async 
   await rig.watcher.acquire();
   rig.advance(CAPS_DELAY_MS + 1);
   for (let i = 0; i < 30; i++) rig.deliverFrame(i * FRAME_MS);
+  assert.equal(rig.applyCalls.length, 0);
+});
+
+test('failed shutter write restores the mode even when the mode write succeeded', async () => {
+  const rig = makeRig({
+    caps: { exposureMode: ['continuous', 'manual'], exposureTime: { min: 1, max: 10000 } },
+  });
+  const apply = rig.track.applyConstraints;
+  rig.track.applyConstraints = async (c) => {
+    await apply(c);
+    if (c.advanced[0].exposureTime !== undefined) throw new Error('shutter rejected');
+  };
+  await rig.watcher.acquire();
+  rig.advance(CAPS_DELAY_MS + 1);
+  await flush();
+  assert.deepEqual(rig.applyCalls.at(-1), { advanced: [{ exposureMode: 'continuous' }] });
+  assert.equal(rig.watcher.status().state, WATCHER_STATES.WATCHING);
+});
+
+test('an exposure probe settling after stop cannot write to a newly acquired session', async () => {
+  const rig = makeRig();
+  let finishCaps;
+  rig.track.getCapabilities = () => new Promise((resolve) => { finishCaps = resolve; });
+  await rig.watcher.acquire();
+  rig.advance(CAPS_DELAY_MS + 1);
+  rig.watcher.stop();
+  await rig.watcher.acquire();
+  finishCaps({ exposureMode: ['continuous', 'manual'], exposureTime: { min: 1, max: 10000 } });
+  await flush();
   assert.equal(rig.applyCalls.length, 0);
 });
 

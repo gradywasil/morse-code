@@ -17,8 +17,8 @@
 //
 // Pipeline (research D1–D5, docs/ultron/run2-receiver/research/r1+r2):
 //   rVFC primary (Baseline 2024) → per-frame luminance (Rec.601 integer
-//   luma over the brightest 4×4-px tile of the 32×32 grid) → rolling
-//   P25/P95 window → dual-threshold hysteresis → median-of-3 →
+//   luma over 4×4-px tiles of the 32×32 grid) → per-tile rolling
+//   P10/peak levels → strongest changing tile → dual-threshold hysteresis →
 //   2-consecutive-frame confirmation → timestamped light edges with the
 //   MIDPOINT between the last old-state frame and the first new-state
 //   frame (±½ frame error bound; D3). rAF fallback dedupes on
@@ -41,7 +41,7 @@ export const SAMPLE_GRID = 32;
 /** Rolling percentile window length in ms (D4: ~1–2 s). */
 export const ROLLING_WINDOW_MS = 1500;
 
-/** Minimum P95−P25 spread (8-bit) before edges may be emitted (D4). */
+/** Minimum local peak−baseline spread (8-bit) before edges may be emitted. */
 export const CONTRAST_GATE = 20;
 
 /** Hysteresis fractions of the rolling range: ON above, OFF below (D4). */
@@ -63,8 +63,12 @@ export const CLIP_LEVEL = 250;
 /** Capability probe delay after stream start (Chrome populates caps late). */
 export const CAPS_DELAY_MS = 500;
 
-/** Manual exposureTime target as a fraction of the advertised range (D5). */
-export const EXPOSURE_LOCK_FRACTION = 0.1;
+/** Maximum manual shutter: exposureTime uses 100 µs units, so 50 = 5 ms. */
+export const MAX_EXPOSURE_TIME = 50;
+
+const TILE = 4;
+const TILES = SAMPLE_GRID / TILE;
+const TILE_COUNT = TILES * TILES;
 
 export const WATCHER_STATES = Object.freeze({
   IDLE: 'idle',
@@ -141,7 +145,6 @@ export function createWatcher(options = {}) {
   let track = null;
   let samplingCanvas = null;
   let samplingCtx = null;
-  let loopHandle = null;      // rVFC has no cancel: a generation counter guards
   let generation = 0;
   let usingRVFC = false;
   let capsTimer = null;
@@ -149,14 +152,14 @@ export function createWatcher(options = {}) {
   let pagehideBound = null;
 
   // Rolling luminance window (D4).
-  const windowSamples = [];  // {tMs, level}
-  const binaryHistory = [];  // last 3 hysteresized 0/1 decisions
+  const windowSamples = [];  // {tMs, levels}
   let lightOn = false;
   let pendingFlip = null;    // {to:boolean, frames:number, fromTMs:number}
   let lastFrameTMs = null;
   let lastVideoTime = -1;
   let lastPresented = null;
-  let onLevel = null;        // decaying peak tracker (ON-level estimate)
+  const onLevels = Array(TILE_COUNT).fill(null);
+  let activeTile = null;     // hold the source location until the OFF edge
   let droppedFrames = 0;     // cumulative (diagnostics)
   let droppedSinceEdge = 0;  // resets at each committed edge
   let lastStats = null;
@@ -181,13 +184,13 @@ export function createWatcher(options = {}) {
     stream = null;
     track = null;
     windowSamples.length = 0;
-    binaryHistory.length = 0;
     lightOn = false;
     pendingFlip = null;
     lastFrameTMs = null;
     lastVideoTime = -1;
     lastPresented = null;
-    onLevel = null;
+    onLevels.fill(null);
+    activeTile = null;
     droppedFrames = 0;
     droppedSinceEdge = 0;
     if (state !== WATCHER_STATES.ERROR) setState(WATCHER_STATES.RELEASED);
@@ -213,9 +216,7 @@ export function createWatcher(options = {}) {
     // Downsample the frame to 32×32 — the ONLY frame read in the product.
     samplingCtx.drawImage(video, 0, 0, SAMPLE_GRID, SAMPLE_GRID);
     const { data } = samplingCtx.getImageData(0, 0, SAMPLE_GRID, SAMPLE_GRID);
-    // Rec.601 integer luma per pixel; track the brightest 4×4-px tile.
-    const TILE = 4, TILES = SAMPLE_GRID / TILE;
-    let bestTile = -1, bestSum = -1;
+    const levels = [];
     let clipped = 0;
     for (let ty = 0; ty < TILES; ty++) {
       for (let tx = 0; tx < TILES; tx++) {
@@ -229,11 +230,11 @@ export function createWatcher(options = {}) {
             if (luma >= CLIP_LEVEL) clipped++;
           }
         }
-        if (sum > bestSum) { bestSum = sum; bestTile = ty * TILES + tx; }
+        levels.push(sum / (TILE * TILE));
       }
     }
     return {
-      level: bestSum / (TILE * TILE),
+      levels,
       clippingFraction: clipped / (SAMPLE_GRID * SAMPLE_GRID),
     };
   }
@@ -253,17 +254,29 @@ export function createWatcher(options = {}) {
     }
     lastPresented = presented;
 
-    const { level, clippingFraction } = measureLevel();
+    const { levels, clippingFraction } = measureLevel();
     const tMs = frameTMs;
 
-    windowSamples.push({ tMs, level });
+    windowSamples.push({ tMs, levels });
     const cutoff = tMs - ROLLING_WINDOW_MS;
     while (windowSamples.length > 0 && windowSamples[0].tMs < cutoff) windowSamples.shift();
-    const sorted = windowSamples.map((s) => s.level).sort((a, b) => a - b);
-    const off = percentile(sorted, 25);
-    // ON level: decaying peak tracker (immediate onset, slow ambient
-    // adaptation — see ON_LEVEL_DECAY above).
-    onLevel = Math.max(level, onLevel === null ? level : onLevel * ON_LEVEL_DECAY);
+    let selected = null;
+    for (let tile = 0; tile < TILE_COUNT; tile++) {
+      const sorted = windowSamples.map((s) => s.levels[tile]).sort((a, b) => a - b);
+      // Dashes occupy 75% of a repeated mark/gap cycle. P25 can become
+      // the lit level at frame boundaries and swallow the following gap.
+      const off = percentile(sorted, 10);
+      const level = levels[tile];
+      onLevels[tile] = Math.max(level, off + ((onLevels[tile] ?? level) - off) * ON_LEVEL_DECAY);
+      const candidate = { tile, level, off, onLevel: onLevels[tile], range: onLevels[tile] - off };
+      // A steady highlight has no temporal contrast and cannot steal the source.
+      if (activeTile !== null && tile !== activeTile) continue;
+      if (selected === null || candidate.range > selected.range
+          || (candidate.range === selected.range && level > selected.level)) {
+        selected = candidate;
+      }
+    }
+    const { tile, level, off, onLevel } = selected;
     const range = onLevel - off;
 
     let edge = null;
@@ -273,14 +286,9 @@ export function createWatcher(options = {}) {
       const lo = off + HYSTERESIS_OFF * range;
       const raw = level > hi ? 1 : (level < lo ? 0 : (lightOn ? 1 : 0));
 
-      binaryHistory.push(raw);
-      if (binaryHistory.length > 3) binaryHistory.shift();
-      // Median-of-3 over the hysteresized series (kills single-frame PWM
-      // beat flicker — D4), then 2-consecutive-frame confirmation.
-      const filtered = binaryHistory.length === 3
-        ? binaryHistory.slice().sort((a, b) => a - b)[1]
-        : raw;
-      const target = filtered === 1;
+      // Two real frames reject single-frame flicker without delaying both
+      // edges through a second filter, which can erase short BRISK dots.
+      const target = raw === 1;
       if (target !== lightOn) {
         if (pendingFlip && pendingFlip.to === target) {
           pendingFlip.frames += 1;
@@ -302,6 +310,7 @@ export function createWatcher(options = {}) {
           };
           droppedSinceEdge = 0;
           lightOn = target;
+          activeTile = target ? tile : null;
           pendingFlip = null;
         }
       } else {
@@ -362,27 +371,42 @@ export function createWatcher(options = {}) {
   // ---- Exposure posture (D5: opportunistic, Chromium-only, silent) ----
 
   async function applyExposurePosture() {
-    if (state !== WATCHER_STATES.WATCHING || typeof track.getCapabilities !== 'function') return;
+    const exposureTrack = track;
+    const gen = generation;
+    if (state !== WATCHER_STATES.WATCHING || typeof exposureTrack?.getCapabilities !== 'function') return;
     let caps;
     try {
-      caps = await track.getCapabilities();
+      caps = await exposureTrack.getCapabilities();
     } catch { return; }
-    if (!caps || state !== WATCHER_STATES.WATCHING) return;
+    if (!caps || state !== WATCHER_STATES.WATCHING || gen !== generation) return;
     try {
       if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes('manual')
           && caps.exposureTime && typeof caps.exposureTime.max === 'number') {
-        const { min = 0, max } = caps.exposureTime;
-        const target = Math.max(min, Math.min(max, Math.round(max * EXPOSURE_LOCK_FRACTION)));
-        await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
-        await track.applyConstraints({ advanced: [{ exposureTime: target }] });
-        exposureApplied = { exposureMode: 'continuous' }; // reset recipe
+        const { min = 1, max, step = 1 } = caps.exposureTime;
+        const settings = await exposureTrack.getSettings?.() ?? {};
+        if (gen !== generation) return;
+        const current = settings.exposureTime > 0 ? settings.exposureTime : MAX_EXPOSURE_TIME;
+        const limit = Math.max(min, Math.min(max, current, MAX_EXPOSURE_TIME));
+        const increment = step > 0 ? step : 1;
+        const target = min + Math.floor((limit - min) / increment) * increment;
+        // Save restoration before either write: failure/stop after mode changes
+        // must not leave a partially applied manual posture behind.
+        exposureApplied = { exposureMode: settings.exposureMode ?? 'continuous' };
+        if (settings.exposureTime > 0) exposureApplied.exposureTime = settings.exposureTime;
+        await exposureTrack.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
+        if (gen !== generation) return;
+        await exposureTrack.applyConstraints({ advanced: [{ exposureTime: target }] });
       } else if (caps.exposureCompensation && typeof caps.exposureCompensation.min === 'number') {
         const { min, step = 1 } = caps.exposureCompensation;
         const target = Math.max(min, -Math.abs(step));
-        await track.applyConstraints({ advanced: [{ exposureCompensation: target }] });
-        exposureApplied = { exposureCompensation: 0 };
+        const settings = await exposureTrack.getSettings?.() ?? {};
+        if (gen !== generation) return;
+        exposureApplied = { exposureCompensation: settings.exposureCompensation ?? 0 };
+        await exposureTrack.applyConstraints({ advanced: [{ exposureCompensation: target }] });
       }
-    } catch { /* best-effort by design (D5) */ }
+    } catch {
+      if (gen === generation) await resetExposure();
+    }
   }
 
   async function resetExposure() {

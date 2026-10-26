@@ -1,0 +1,16 @@
+.git/**
+.gitignore
+.assetsignore
+.wrangler/**
+.impeccable/**
+node_modules/**
+android/**
+test/**
+docs/**
+package*.json
+wrangler.jsonc
+*.md
+*.keystore
+*.jks
+*.apk
+*.aab

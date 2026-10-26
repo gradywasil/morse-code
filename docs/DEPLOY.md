@@ -1,5 +1,11 @@
 # Deploy — The Register (task D0)
 
+> Android preparation update, 2026-10-26: include `manifest.webmanifest` and
+> `icons/` alongside the app assets when deploying. For the root-served
+> Cloudflare Worker, `.assetsignore` excludes development files, generated
+> Android projects, and signing artifacts. The file counts below describe the
+> original release. See [ANDROID.md](ANDROID.md) for Bubblewrap setup.
+
 **Who runs this:** you. Deploying means publishing to an external service — that
 part is user-owned by design; this document is the handover. **Time:** ~5 minutes
 for any host below.

@@ -48,12 +48,11 @@ test('npm test runs the glob form that resolves on this Node, and package.json s
   assert.equal(pkg.dependencies, undefined, 'no dependencies, ever (PRODUCT.md: no build step)');
   assert.equal(pkg.devDependencies, undefined, 'no devDependencies, ever');
   const script = pkg.scripts?.test ?? '';
-  // npm executes scripts through the shell; strip quoting to normalize.
-  const normalized = script.replaceAll('\'', '').replaceAll('"', '');
+  // Double quotes work in both cmd.exe (npm on Windows) and POSIX shells.
   assert.equal(
-    normalized,
-    `node --test ${GLOB}`,
-    'test script must use the glob form (bare `node --test test/` fails to resolve on Node 24.8.0 — T-F2)'
+    script,
+    `node --test "${GLOB}"`,
+    'the glob must use double quotes; cmd.exe passes single quotes literally and Node runs zero tests'
   );
 });
 
@@ -101,7 +100,8 @@ test(
     assert.ok(!/recursively/.test(probe.stderr), `discovery probe was skipped as recursive:\n${probe.stderr}`);
     assert.equal(probe.status, 0, `discovery probe exited nonzero\nstdout:\n${probe.stdout}\nstderr:\n${probe.stderr}`);
     // Top-level `# Subtest:` lines sit at column 0; anything nested is indented.
-    const discovered = [...probe.stdout.matchAll(/^# Subtest: (\S+)$/gm)].map((m) => m[1]).sort();
+    const discovered = [...probe.stdout.matchAll(/^# Subtest: (\S+)$/gm)]
+      .map((m) => m[1].replace(/\\+/g, '/')).sort();
     assert.deepEqual(
       discovered,
       onDisk,

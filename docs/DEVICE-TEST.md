@@ -438,6 +438,14 @@ does it decode, and does it feel reliable or flaky?
 
 ## What to report back
 
+For the 2026-10-26 ambient-light correction, repeat R1/R2 with a steady bright
+window or lamp in another part of the preview. Then repeat in normal room
+light and a brighter room, without a sender, and confirm that the preview
+does not wash out when the exposure probe runs after camera startup. Record
+the phone/browser, lighting, sender distance, and exact expected/received text.
+Synthetic frames pass at 24/30/60 fps across the three sending speeds, but
+those results do not verify the physical camera's exposure or torch timing.
+
 For each numbered check: pass/fail (objective) or fine/off (subjective), plus
 phone models + browser versions, room brightness (dark/dim/normal/bright),
 and distance. For BRISK flakiness: roughly what fraction of letters decoded.
