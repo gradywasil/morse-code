@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.arrangedgodly.morsecode",
+      "sha256_cert_fingerprints": [
+        "5B:88:6F:83:34:1B:BD:87:A7:B7:62:6F:A9:8B:32:E8:CC:6E:E7:01:D8:BF:25:F8:DE:63:33:F5:FB:47:98:FE",
+        "63:FA:2B:A8:98:89:4C:D3:53:07:AD:74:4D:CE:CC:92:8B:CE:FD:AF:84:01:E3:23:42:18:EA:FB:F5:D5:89:A5",
+        "D2:C1:B5:D3:F0:33:21:6B:EE:68:6A:3F:FB:3F:44:41:6D:E2:BF:71:10:19:67:9E:59:0E:D1:53:17:14:1F:AC"
+      ]
+    }
+  }
+]

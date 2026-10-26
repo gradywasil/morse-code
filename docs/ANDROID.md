@@ -66,8 +66,13 @@ It was rebuilt after the branding/domain update and uses the Android debug
 certificate. It has not been installed or run on a device.
 
 Live HTTP checks on `morse.graydonwasil.com` returned 200 for `/`, the manifest,
-and both wrapper icon URLs. `/.well-known/assetlinks.json` still returns 404.
-Verified fullscreen TWA launch and physical camera behavior have not been tested.
+and both wrapper icon URLs. The website association is now defined in
+`.well-known/assetlinks.json`, with the three public SHA-256 certificate
+fingerprints supplied from Play Console on 2026-10-26. The same fingerprints
+are retained in `android/twa-manifest.json` for regeneration. Publishing this
+file completes the website side of TWA verification; toolbar-free launch still
+needs confirmation on the Play-installed app. Physical camera behavior also
+needs device testing.
 The future website-to-Play promotion is scoped in [PLAY-PROMOTION.md](PLAY-PROMOTION.md)
 and awaits a public store listing.
 
@@ -141,7 +146,9 @@ npx --yes @bubblewrap/cli@1.27.0 fingerprint generateAssetLinks --output assetli
 
 Copy the generated file to the site's `.well-known/assetlinks.json`, deploy it,
 and verify that URL returns HTTP 200 JSON without authentication or redirects.
-No placeholder association file is shipped in this preparation.
+The tracked association file contains the real fingerprints supplied from Play
+Console. Keep it synchronized with the wrapper configuration if signing
+certificates change.
 
 ## Device and release checks
 
