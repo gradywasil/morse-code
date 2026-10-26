@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#171008">
   <link rel="manifest" href="manifest.webmanifest">
   <title>Morse · Send &amp; Receive</title>
+  <link rel="canonical" href="https://morse.graydonwasil.com/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="icon" href="favicon.ico" sizes="16x16 32x32">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -112,10 +113,10 @@
         <p class="status-line" data-state-line="done"><span class="status-legend">DONE</span> <span class="status-copy">THE RUN IS OVER. THE TAPE KEEPS THE MESSAGE.</span></p>
         <p class="status-line" data-state-line="error"><span class="status-legend">FAULT</span> <span class="status-copy">A FAULT STOPPED THE RUN. THE MESSAGE SURVIVES.</span></p>
         <!-- Run 2 — the receive lines (shown only in receive mode). -->
-        <p class="status-line" data-receive-line="receive-idle"><span class="status-legend">AT REST</span> <span class="status-copy">THE REGISTER LISTENS FOR NOTHING YET.</span></p>
+        <p class="status-line" data-receive-line="receive-idle"><span class="status-legend">AT REST</span> <span class="status-copy">READY TO LISTEN.</span></p>
         <p class="status-line" data-receive-line="receive-preflight"><span class="status-legend">PREFLIGHT</span> <span class="status-copy">THE GATE BEFORE THE EYE OPENS.</span></p>
         <p class="status-line" data-receive-line="receive-arming"><span class="status-legend">OPENING THE EYE</span> <span class="status-copy">THE CAMERA QUESTION IS WITH THE BROWSER.</span></p>
-        <p class="status-line" data-receive-line="receive-denied"><span class="status-legend">PERMISSION DENIED</span> <span class="status-copy">CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.</span></p>
+        <p class="status-line" data-receive-line="receive-denied"><span class="status-legend">PERMISSION DENIED</span> <span class="status-copy">CAMERA REFUSED. MORSE NEEDS IT TO LISTEN.</span></p>
         <p class="status-line" data-receive-line="receive-unsupported"><span class="status-legend">NO EYE</span> <span class="status-copy">THIS CONTEXT OFFERS NO CAMERA. THE BROADCAST HALF STILL SPEAKS.</span></p>
         <p class="status-line" data-receive-line="receive-armed"><span class="status-legend">LISTENING</span> <span class="status-copy">THE EYE IS OPEN. AIM AT THE LIGHT.</span></p>
         <p class="status-line" data-receive-line="receive-active"><span class="status-legend">RECEIVING</span> <span class="status-copy">LIGHT SPEAKS. THE TAPE PUNCHES WHAT IT HEARS.</span></p>
@@ -358,7 +359,7 @@
     </aside>
     <aside class="bay gate-plate" id="receive-denied" aria-label="PERMISSION DENIED">
       <h2 class="gate-title">PERMISSION DENIED</h2>
-      <p class="denied-line">CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.</p>
+      <p class="denied-line">CAMERA REFUSED. MORSE NEEDS IT TO LISTEN.</p>
       <p class="denied-hint">Regrant camera access in the browser site settings, then listen again.</p>
       <div class="keys">
         <button class="key key-primary" type="button" data-action="retry-receive">RETRY LISTENING</button>

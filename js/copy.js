@@ -362,7 +362,7 @@ export const COPY = deepFreeze({
     states: {
       [RECEIVE_STATES.IDLE]: {
         legend: 'AT REST',
-        line: 'THE REGISTER LISTENS FOR NOTHING YET.',
+        line: 'READY TO LISTEN.',
       },
       [RECEIVE_STATES.PREFLIGHT]: {
         legend: 'PREFLIGHT',
@@ -374,7 +374,7 @@ export const COPY = deepFreeze({
       },
       [RECEIVE_STATES.DENIED]: {
         legend: 'PERMISSION DENIED',
-        line: 'CAMERA REFUSED. THE REGISTER CANNOT LISTEN WITHOUT IT.',
+        line: 'CAMERA REFUSED. MORSE NEEDS IT TO LISTEN.',
       },
       [RECEIVE_STATES.UNSUPPORTED]: {
         legend: 'NO EYE',

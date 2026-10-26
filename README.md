@@ -1,5 +1,7 @@
 # Morse
 
+Use the app at [morse.graydonwasil.com](https://morse.graydonwasil.com).
+
 Type a message in plain English and your phone's flashlight broadcasts it in Morse code — real hardware, no app install, no server. Point a second phone's camera at the light and it decodes the message back into text as it flashes. The interface is a telegraph register: your words punch a paper tape as dots and dashes, a read-head traverses the tape while the light speaks — and when listening, the tape punches itself from the light it hears.
 
 > [!IMPORTANT]
@@ -88,7 +90,7 @@ npm test
 Android packaging preparation and the remaining Bubblewrap signing/domain steps
 are documented in [docs/ANDROID.md](docs/ANDROID.md). The linked web manifest and
 launcher icons are included. A Bubblewrap project targets
-`morsecode.graydonwasil.com`; local unsigned APK/AAB compilation succeeds.
+`morse.graydonwasil.com`; local unsigned APK/AAB compilation succeeds.
 An installable debug APK is available locally for device testing.
 Release signing, domain verification, and device acceptance remain open.
 

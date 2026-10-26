@@ -35,12 +35,16 @@ Used on phones, usually held up, often in dim rooms (the light is the point). Ca
 - Sharing: message + WPM round-trip through the URL hash.
 - Receiver (run 2): same page, BROADCAST/RECEIVE mode toggle. Gesture-driven camera permission with a why-camera plate before the prompt; small live preview for aiming plus a non-visual signal meter (hearing light / hearing nothing / noise); downsampled on-device brightness sampling → timestamped light edges; pure decoder with zero-coordination clock recovery (dot unit inferred from durations — ITU ratios 1/3/1/3/7 are speed-invariant) → live streaming text; honest partial-message indication on mid-stream join; auto-complete after extended silence (~8–10 s) plus manual STOP; COPY for the decoded message. Compatibility contract: broadcasts sent by this app (torch and screen channels, all three WPM steps) — hand-held-flashlight Morse is best-effort, never promised.
 - Privacy constraint (re-scoped run 2): broadcast keeps the run-1 law untouched — the torch camera track is never read, recorded, or transmitted and is released after broadcast. Receiving reads frames under a strict confinement: downsampled brightness sampling exists only in the receiver watcher module, is computed on-device in memory, is never stored, recorded, or transmitted, and the camera is hard-released on stop, mode switch, and backgrounding. Pinned by a re-scoped repo-wide privacy-scan test.
-- Android distribution (authorized 2026-10-26): Bubblewrap TWA launching `https://morsecode.graydonwasil.com`, package `com.arrangedgodly.morsecode`. The web app remains the runtime; native packaging requires Android build tooling, signing, and Digital Asset Links. See `docs/ANDROID.md` for build evidence and remaining release steps.
+- Android distribution (authorized 2026-10-26): Bubblewrap TWA launching `https://morse.graydonwasil.com`, package `com.arrangedgodly.morsecode`. The web app remains the runtime; native packaging requires Android build tooling, signing, and Digital Asset Links. See `docs/ANDROID.md` for build evidence and remaining release steps.
 - Non-goals: re-broadcasting/relaying a received message, sharing a received message as a link, receive history or any persistence, continuous loop mode, server, accounts, analytics, non-Latin Morse variants.
 
 ## Brand Commitments
 
 Public label: "Morse", condensed by user request on 2026-10-26. The existing punched-tape M favicon is the small header mark; the old Register heading and tagline no longer occupy the main screen. Preserve the warm ground, paper tape, and amber controls.
+
+Canonical web origin: `https://morse.graydonwasil.com`. Android launch and asset
+association configuration target this origin. The Android application ID remains
+`com.arrangedgodly.morsecode`.
 
 The main interface fills one viewport. Speed, sound, and sharing live in OPTIONS.
 Receiving has a selectable live transcript beneath the ticker. It follows new
@@ -54,6 +58,12 @@ the selected speed. It encourages a few words without truncating longer input
 or shared messages. The received transcript is also compact, with internal
 scrolling for longer records. Key presses use brief mechanical feedback, with
 movement removed for reduced-motion and save-data preferences.
+
+Future distribution scope: a discreet official Google Play badge in the website's
+OPTIONS dialog links to the public Morse listing. It stays hidden inside the
+installed app, adds no ad network or tracking, and does not consume the main
+instrument's viewport. It is not enabled before the listing exists. See
+`docs/PLAY-PROMOTION.md` for scope and acceptance checks.
 
 ## Evidence on Hand
 

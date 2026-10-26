@@ -139,9 +139,11 @@ test('PRIVACY: zero network call surfaces in shipped JS; index.html requests onl
   const jsFiles = sources.filter((s) => s.name !== 'index.html').map((s) => ({ name: s.name, text: stripComments(s.text) }));
   assert.deepEqual(findTokens(jsFiles, NET), [], 'shipped JS must open no network request surface');
 
-  // index.html: every external URL is a static Google Fonts asset (fixed
-  // families/weights — the request carries no user data), everything else same-origin.
-  const external = [...indexHtml.matchAll(/(?:href|src)="(https?:)?\/\/([^"]+)"/g)].map((m) => m[2]);
+  // Canonical metadata does not load a resource. All remaining external URLs
+  // must be the fixed Google Fonts assets, which carry no user data.
+  const canonical = '<link rel="canonical" href="https://morse.graydonwasil.com/">';
+  assert.ok(indexHtml.includes(canonical), 'canonical metadata names the production origin');
+  const external = [...indexHtml.replace(canonical, '').matchAll(/(?:href|src)="(https?:)?\/\/([^"]+)"/g)].map((m) => m[2]);
   assert.ok(external.length >= 3, `expected the fonts pair, found ${JSON.stringify(external)}`);
   for (const hostPath of external) {
     assert.match(hostPath, /^(fonts\.googleapis\.com|fonts\.gstatic\.com)(\/|$)/, `only Google Fonts may be external, found ${hostPath}`);

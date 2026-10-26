@@ -18,10 +18,10 @@ verification.
 The Bubblewrap Android project is generated locally in `android/`. Its source
 configuration, `android/twa-manifest.json`, is retained as a source file;
 generated Java/resources, SDK paths, Gradle caches, and binaries are ignored.
-The user selected `https://morsecode.graydonwasil.com` as the production origin
+The user selected the new `https://morse.graydonwasil.com` production origin
 and accepted the package name `com.arrangedgodly.morsecode`. The wrapper launches
-the hosted app; local receiver fixes are not embedded in the APK and must be
-deployed to that origin before the wrapper can use them.
+the hosted app; web changes are not embedded in the APK. Both the tracked
+configuration and local generated project now use the name Morse and this origin.
 
 Generation used Bubblewrap 1.27.0's core generator with local manifest/icon
 responses, without fetching or publishing those assets on the production
@@ -39,16 +39,19 @@ device was connected when `adb devices` was checked.
 on 2026-10-26. Both release artifacts are unsigned. The generated template
 reports a non-fatal warning about its legacy manifest `package` attribute and
 Gradle deprecation notices; compilation succeeded with the pinned wrapper.
+These unsigned release outputs precede the latest branding/domain update and
+must be rebuilt before release.
 
 `gradlew.bat --no-daemon assembleDebug` also completed successfully. The
 installable test APK is `android/app/build/outputs/apk/debug/app-debug.apk`.
-It uses the Android debug certificate. It has not been installed or run on a
-device, and will launch the currently hosted app until the web fixes deploy.
+It was rebuilt after the branding/domain update and uses the Android debug
+certificate. It has not been installed or run on a device.
 
-Live HTTP checks on the custom domain returned 200 for `/`, and 404 for both
-`/manifest.webmanifest` and `/.well-known/assetlinks.json`. The local changes
-have not been deployed. Verified fullscreen TWA launch and physical camera
-behavior have not been tested.
+Live HTTP checks on `morse.graydonwasil.com` returned 200 for `/`, the manifest,
+and both wrapper icon URLs. `/.well-known/assetlinks.json` still returns 404.
+Verified fullscreen TWA launch and physical camera behavior have not been tested.
+The future website-to-Play promotion is scoped in [PLAY-PROMOTION.md](PLAY-PROMOTION.md)
+and awaits a public store listing.
 
 ## Regenerate after deploying the manifest
 

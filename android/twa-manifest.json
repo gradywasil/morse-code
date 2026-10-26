@@ -1,6 +1,6 @@
 {
   "packageId": "com.arrangedgodly.morsecode",
-  "host": "morsecode.graydonwasil.com",
+  "host": "morse.graydonwasil.com",
   "name": "Morse",
   "launcherName": "Morse",
   "display": "standalone",
@@ -13,8 +13,8 @@
   "backgroundColor": "#171008",
   "enableNotifications": false,
   "startUrl": "/",
-  "iconUrl": "https://morsecode.graydonwasil.com/icons/icon-512.png",
-  "maskableIconUrl": "https://morsecode.graydonwasil.com/icons/maskable-512.png",
+  "iconUrl": "https://morse.graydonwasil.com/icons/icon-512.png",
+  "maskableIconUrl": "https://morse.graydonwasil.com/icons/maskable-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "../../morse-code-signing/release.keystore",
@@ -24,7 +24,7 @@
   "appVersionCode": 1,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://morsecode.graydonwasil.com/manifest.webmanifest",
+  "webManifestUrl": "https://morse.graydonwasil.com/manifest.webmanifest",
   "fallbackType": "customtabs",
   "features": {},
   "alphaDependencies": {
@@ -33,7 +33,7 @@
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
   "isMetaQuest": false,
-  "fullScopeUrl": "https://morsecode.graydonwasil.com/",
+  "fullScopeUrl": "https://morse.graydonwasil.com/",
   "minSdkVersion": 24,
   "orientation": "default",
   "fingerprints": [],
