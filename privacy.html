@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171008">
+  <meta name="description" content="How Morse handles camera access, messages, sharing, and technical website data.">
+  <title>Privacy policy · Morse</title>
+  <link rel="canonical" href="https://morse.graydonwasil.com/privacy">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/privacy.css">
+</head>
+<body class="privacy-page">
+  <header class="policy-header">
+    <a class="policy-brand" href="./"><span class="brand-mark" aria-hidden="true"></span>Morse</a>
+    <a href="./">Back to Morse</a>
+  </header>
+  <main class="policy-content">
+    <h1>Privacy policy</h1>
+    <p class="policy-date">Effective and last updated October 26, 2026</p>
+    <p>This policy applies to <strong>Morse</strong>, the website at <a href="https://morse.graydonwasil.com">morse.graydonwasil.com</a> and the Android app with package ID <code>com.arrangedgodly.morsecode</code>. For questions about this policy or your data, contact Morse developer support at <a href="mailto:help@arrangedgodly.com">help@arrangedgodly.com</a>.</p>
+    <p>Morse converts text to flashing light and sound, and can decode flashing light through your camera. Camera frames and message text are processed on your device. They are not uploaded to us. Loading the website does involve technical requests to hosting and font providers, as explained below.</p>
+
+    <h2>Camera access and sound</h2>
+    <p>Morse asks for camera permission when you choose a feature that needs it. To control a supported phone's flashlight, the browser opens a camera stream. The broadcaster does not read or record video from that stream. In Receive mode, Morse shows a small camera preview and samples low-resolution brightness on your device to detect flashes and decode text. It does not save images or video, record them, or transmit them to a server.</p>
+    <p>Stopping a receive session releases the camera. Receiving also stops when you switch modes or put the app in the background. Finishing or stopping a broadcast releases its camera stream; a paused broadcast can retain the stream so it can resume. You can revoke camera permission in your browser or device settings. The screen-light broadcaster can work without camera access.</p>
+    <p>Optional sound is generated on your device. Morse does not request microphone access or record audio.</p>
+
+    <h2>Messages, links, and clipboard</h2>
+    <p>Typed and received messages are processed in the open page. We do not receive them or maintain a server-side message history. Starting a new listening session clears the previous received message from the app's display.</p>
+    <p>The current broadcast message and selected speed are encoded in the part of the page URL after <code>#</code>. That URL fragment is not included in normal HTTP requests to the hosting server. It is an encoding, not encryption. Your browser may retain the URL in its history or synchronize it according to your browser settings.</p>
+    <p>When you choose Copy link, the message is included in the copied URL. Anyone you give the link to can read that message. Copying a received message writes that text to your clipboard. Morse only writes to the clipboard when you request a copy; it does not read your clipboard. Other apps and services you choose to paste or send content to handle it under their own policies.</p>
+    <p>A light or sound broadcast can be observed by people nearby. Morse is not a private or encrypted communication channel.</p>
+
+    <h2>Website delivery and service providers</h2>
+    <p><strong>Cloudflare</strong> hosts and delivers Morse over HTTPS. To provide the site, protect it from abuse, and diagnose delivery problems, Cloudflare processes technical request information such as IP addresses, request times, requested paths, browser and device headers, and security or error information. This is separate from the locally processed camera frames and message text. See <a href="https://www.cloudflare.com/privacypolicy/" rel="noreferrer">Cloudflare's privacy policy</a>.</p>
+    <p>The app loads typefaces from <strong>Google Fonts</strong>. Your browser contacts Google's font servers and sends technical request information, including your IP address and browser headers. Morse does not attach your message or camera content to these font requests. See <a href="https://policies.google.com/privacy" rel="noreferrer">Google's privacy policy</a> and the <a href="https://fonts.google.com/faq" rel="noreferrer">Google Fonts FAQ</a>.</p>
+    <p>The Android app displays the hosted Morse site through a supporting browser. Google Play, Android, and that browser may separately process installation, account, device, or diagnostic information under their own policies. Morse does not receive your Google account credentials.</p>
+    <p>Morse does not include an advertising network, advertising identifiers, or a third-party analytics SDK. We do not sell message or camera data, build advertising profiles, or give service providers message or camera content. Technical service providers may process data internationally under their own privacy and security arrangements.</p>
+
+    <h2>Storage, retention, and deletion</h2>
+    <p>Morse does not create user accounts or use app-managed cookies, local storage, or a database to save messages or preferences. The open page holds working data in memory. Your browser can retain URLs, permissions, clipboard contents, cached files, or restored page state; those are controlled by your browser and device settings.</p>
+    <p>We have no server-side camera recordings or message history to retrieve or delete. You can clear a received record by starting a new listen, remove a broadcast message from the input and URL, and clear browser history, site data, permissions, or clipboard content using your device's controls. Copies or links you have sent to other people are outside our control.</p>
+    <p>Technical hosting records are handled under the service providers' retention policies and service settings. If you email support, we and our email service provider receive your email address, message, and anything you attach. We use that information to respond and resolve the request, and retain it only as needed for that purpose or applicable legal obligations. You can request deletion of support correspondence at <a href="mailto:help@arrangedgodly.com">help@arrangedgodly.com</a>.</p>
+
+    <h2>Security and your choices</h2>
+    <p>The website uses HTTPS for delivery. Camera access is controlled by the browser's permission system, and the camera and decoding work stays on your device. You can decline or revoke camera permission, stop listening or broadcasting, avoid sharing a message link, and clear browser-managed data. No method of transmission or storage can be guaranteed completely secure.</p>
+    <p>If you want to ask about access to, correction of, or deletion of personal information you have provided through support, contact the address below. We can only act on information we or our service providers hold; we cannot access messages or camera content that remained on your device.</p>
+
+    <h2>Children's privacy</h2>
+    <p>Morse does not ask for a user's age or collect personal information through accounts or app forms. If you believe a child has provided personal information to us through support correspondence, contact us so we can review and delete it where appropriate.</p>
+
+    <h2>Changes and contact</h2>
+    <p>We will update this page when Morse's data practices change and revise the date at the top. Questions or privacy requests can be sent to Morse developer support at <a href="mailto:help@arrangedgodly.com">help@arrangedgodly.com</a>.</p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,18 @@
+body.privacy-page { display: block; height: auto; min-height: 100dvh; overflow: visible; }
+.policy-header, .policy-content { width: min(100%, 800px); margin: 0 auto; padding: 24px; }
+.policy-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid var(--hairline); }
+.privacy-page a { color: var(--cream); text-underline-offset: 3px; }
+.privacy-page a:hover { color: var(--lamp); }
+.policy-brand { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; text-decoration: none; }
+.policy-header a { min-height: 44px; display: inline-flex; align-items: center; }
+.policy-header > a:last-child { font-size: 14px; }
+.policy-content { padding-top: 40px; padding-bottom: 64px; font-size: 16px; line-height: 1.75; overflow-wrap: anywhere; }
+.policy-content h1 { font-size: clamp(30px, 6vw, 40px); line-height: 1.15; letter-spacing: -0.02em; }
+.policy-content h2 { margin-top: 36px; margin-bottom: 12px; font-size: 22px; line-height: 1.3; }
+.policy-content p + p { margin-top: 16px; }
+.policy-content .policy-date { margin-top: 12px; margin-bottom: 24px; color: var(--cream-dim); font-size: 14px; }
+.policy-content code { font-size: 0.85em; }
+@media (max-width: 360px) {
+  .policy-header, .policy-content { padding-left: 16px; padding-right: 16px; }
+  .policy-header { gap: 12px; }
+}
