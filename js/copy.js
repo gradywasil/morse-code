@@ -181,14 +181,14 @@ export const COPY = deepFreeze({
 
   // The why-camera explainer (shown BEFORE the browser camera prompt) ---------
   whyCamera: {
-    title: 'WHY THE CAMERA PROMPT',
+    title: 'CAMERA ACCESS',
     lines: [
-      'Browsers expose the flashlight only through a live camera stream.',
-      'Allow camera access to use your flashlight.',
+      'Your browser controls the flashlight through a live camera stream.',
+      'Allow camera access to enable your flashlight.',
       'No video is recorded. No video is sent anywhere.',
       'The camera closes the moment the broadcast ends.',
     ],
-    proceed: 'CONTINUE TO THE PROMPT',
+    proceed: 'ENABLE FLASHLIGHT',
   },
 
   // Per-state plate copy — ALL 15 F8 states (keys are STATES values) ----------
@@ -259,8 +259,8 @@ export const COPY = deepFreeze({
   denied: {
     offer: 'BROADCAST BY SCREEN LIGHT',
     offerLine: 'THE SCREEN NEEDS NO PERMISSION AND SPEAKS THE SAME MORSE.',
-    retry: 'RETRY THE FLASHLIGHT',
-    hint: 'Refused by choice? Regrant camera access in the browser site settings, then retry.',
+    retry: 'TRY AGAIN',
+    hint: 'Allow camera access for your browser in Android settings and for this site in browser settings, then try again.',
   },
 
   // The positive screen framing ------------------------------------------------
@@ -348,14 +348,14 @@ export const COPY = deepFreeze({
     // The receive why-camera plate (BEFORE the prompt — the plate grammar
     // mirrors the broadcast explainer).
     whyCamera: {
-      title: 'WHY THE CAMERA PROMPT',
+      title: 'CAMERA ACCESS',
       lines: [
         'Your camera detects the flashing light.',
         'It watches light levels in a live view.',
         'Nothing is recorded. Nothing is sent anywhere.',
         'The camera closes the moment you stop.',
       ],
-      proceed: 'BEGIN LISTENING',
+      proceed: 'ENABLE CAMERA',
     },
 
     // Per-state plate copy — ALL receive states (keys are RECEIVE_STATES).

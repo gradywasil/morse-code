@@ -428,40 +428,9 @@ function requestHashWrite() {
 // Arming (the only path that touches the camera)
 // ---------------------------------------------------------------------------
 
-/**
- * Best-effort "will the browser actually prompt?" — T-F8's refinement
- * heuristic: nothing to ask (no media stack) or the permission already
- * decided → skip the why-camera plate; otherwise show it BEFORE the prompt.
- */
-async function promptExpected() {
-  let supported = false;
-  try {
-    supported = torch.status().supported;
-  } catch {
-    supported = false;
-  }
-  if (!supported) return false;
-  try {
-    const perms = navigator.permissions;
-    if (perms && typeof perms.query === 'function') {
-      const status = await perms.query({ name: 'camera' });
-      if (status && (status.state === 'granted' || status.state === 'denied')) {
-        return false; // remembered decision — no prompt is coming
-      }
-    }
-  } catch {
-    /* permissions API unavailable / unknown name — first-run guess: prompt */
-  }
-  return true;
-}
-
-async function beginArm() {
-  if (await promptExpected()) {
-    // Why-camera first (copy law), then the prompt rides CONTINUE's gesture.
-    machine.dispatch(STATE_EVENTS.PERMISSION_PROMPTED);
-    return; // the continue-prompt action picks up acquire()
-  }
-  acquire();
+// Keep the camera request on the explicit Enable flashlight gesture.
+function beginArm() {
+  machine.dispatch(STATE_EVENTS.PERMISSION_PROMPTED);
 }
 
 async function acquire() {
@@ -671,7 +640,7 @@ const ACTIONS = {
     machine.dispatch(STATE_EVENTS.ACCEPT_SCREEN);
   },
   'retry-arm': () => {
-    if (machine.dispatch(STATE_EVENTS.RETRY_ARM).accepted) beginArm();
+    if (machine.dispatch(STATE_EVENTS.RETRY_ARM).accepted) acquire();
   },
   cancel: () => {
     clearBeat();

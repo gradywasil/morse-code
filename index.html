@@ -324,29 +324,30 @@
         <button class="key" type="button" data-action="decline">NOT NOW</button>
       </div>
     </aside>
-    <aside class="bay" id="why-camera" aria-label="WHY THE CAMERA PROMPT">
-      <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
+    <aside class="bay" id="why-camera" aria-label="CAMERA ACCESS">
+      <h2 class="gate-title">CAMERA ACCESS</h2>
       <ul class="why-lines">
-        <li>Browsers expose the flashlight only through a live camera stream.</li>
-        <li>Allow camera access to use your flashlight.</li>
+        <li>Your browser controls the flashlight through a live camera stream.</li>
+        <li>Allow camera access to enable your flashlight.</li>
         <li>No video is recorded. No video is sent anywhere.</li>
         <li>The camera closes the moment the broadcast ends.</li>
       </ul>
       <div class="keys">
-        <button class="key key-primary" type="button" data-action="continue-prompt">CONTINUE TO THE PROMPT</button>
+        <button class="key key-primary" type="button" data-action="continue-prompt">ENABLE FLASHLIGHT</button>
       </div>
     </aside>
     <aside class="bay" id="denied" aria-label="PERMISSION DENIED">
-      <h2 class="gate-title">BROADCAST BY SCREEN LIGHT</h2>
+      <h2 class="gate-title">CAMERA ACCESS BLOCKED</h2>
       <p class="denied-line">THE SCREEN NEEDS NO PERMISSION AND SPEAKS THE SAME MORSE.</p>
-      <p class="denied-hint">Refused by choice? Regrant camera access in the browser site settings, then retry.</p>
+      <p class="denied-hint">Allow camera access for your browser in Android settings and for this site in browser settings, then try again.</p>
+      <p class="permission-settings">On Android 12 or later, also check that Camera access is on in Quick Settings. A blocked request may not show a new prompt.</p>
       <div class="keys">
         <button class="key key-primary" type="button" data-action="accept-screen">BROADCAST BY SCREEN LIGHT</button>
-        <button class="key" type="button" data-action="retry-arm">RETRY THE FLASHLIGHT</button>
+        <button class="key" type="button" data-action="retry-arm">TRY AGAIN</button>
       </div>
     </aside>
-    <aside class="bay gate-plate" id="why-camera-receive" aria-label="WHY THE CAMERA PROMPT">
-      <h2 class="gate-title">WHY THE CAMERA PROMPT</h2>
+    <aside class="bay gate-plate" id="why-camera-receive" aria-label="CAMERA ACCESS">
+      <h2 class="gate-title">CAMERA ACCESS</h2>
       <ul class="why-lines">
         <li>Your camera detects the flashing light.</li>
         <li>It watches light levels in a live view.</li>
@@ -354,17 +355,18 @@
         <li>The camera closes the moment you stop.</li>
       </ul>
       <div class="keys">
-        <button class="key key-primary" type="button" data-action="begin-listening">BEGIN LISTENING</button>
+        <button class="key key-primary" type="button" data-action="begin-listening">ENABLE CAMERA</button>
         <button class="key" type="button" data-action="cancel">NOT NOW</button>
       </div>
     </aside>
     <aside class="bay gate-plate" id="receive-denied" aria-label="PERMISSION DENIED">
-      <h2 class="gate-title">PERMISSION DENIED</h2>
+      <h2 class="gate-title">CAMERA ACCESS BLOCKED</h2>
       <p class="denied-line">CAMERA REFUSED. MORSE NEEDS IT TO LISTEN.</p>
-      <p class="denied-hint">Regrant camera access in the browser site settings, then listen again.</p>
+      <p class="denied-hint">Allow camera access for your browser in Android settings and for this site in browser settings, then try again.</p>
+      <p class="permission-settings">On Android 12 or later, also check that Camera access is on in Quick Settings. A blocked request may not show a new prompt.</p>
       <div class="keys">
-        <button class="key key-primary" type="button" data-action="retry-receive">RETRY LISTENING</button>
-        <button class="key" type="button" data-action="reset">BACK TO REST</button>
+        <button class="key key-primary" type="button" data-action="retry-receive">TRY AGAIN</button>
+        <button class="key" type="button" data-action="reset">BACK TO RECEIVE</button>
       </div>
     </aside>
   </dialog>
