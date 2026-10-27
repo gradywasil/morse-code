@@ -1,0 +1,2 @@
+# Preserve the upstream license text verbatim, including its line-end spaces.
+native/web/fonts/*-OFL.txt whitespace=-blank-at-eol

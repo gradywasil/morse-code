@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test \"test/*.test.mjs\"",
+    "build:native": "node scripts/prepare-native.mjs",
+    "android:sync": "npm run build:native && cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3"
   }
 }

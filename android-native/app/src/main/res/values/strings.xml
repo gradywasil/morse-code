@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Morse</string>
+    <string name="title_activity_main">Morse</string>
+    <string name="package_name">com.arrangedgodly.morsecode</string>
+    <string name="custom_url_scheme">com.arrangedgodly.morsecode</string>
+</resources>

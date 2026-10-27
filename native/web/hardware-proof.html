@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171008">
+  <title>Morse hardware test</title>
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/privacy.css">
+</head>
+<body class="privacy-page">
+  <main class="policy-content">
+    <h1>Morse hardware test</h1>
+    <p>Test camera permission, a live preview, and flashlight control directly through Android. Chrome and Opera are not used for this test.</p>
+    <p>This is a proof build. The bundled Morse interface still uses its existing web camera and flashlight implementation; native receiving is not connected yet.</p>
+    <p><button class="key key-primary" id="hardware" type="button">OPEN NATIVE HARDWARE TEST</button></p>
+    <p id="result" role="status"></p>
+    <p><a href="index.html">Open the bundled Morse interface</a></p>
+    <p><a href="privacy.html">Current Morse privacy policy</a></p>
+    <p>The native test processes the camera preview on your device. It does not record, save, or upload camera content. Stop the preview and flashlight before returning.</p>
+  </main>
+  <script type="module" src="hardware-proof.js"></script>
+</body>
+</html>

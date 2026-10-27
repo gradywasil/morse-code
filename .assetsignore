@@ -5,6 +5,12 @@
 .impeccable/**
 node_modules/**
 android/**
+android-native/**
+native/**
+native-web/**
+artifacts/**
+scripts/**
+capacitor.config.json
 test/**
 docs/**
 package*.json

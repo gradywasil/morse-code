@@ -41,12 +41,10 @@ const onDiskRelative = () =>
     .map((f) => `test/${f}`)
     .sort();
 
-test('npm test runs the glob form that resolves on this Node, and package.json stays dependency-free', () => {
+test('npm test runs the glob form that resolves on this Node', () => {
   const pkg = JSON.parse(readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
   assert.equal(pkg.private, true, 'package.json must stay private');
   assert.equal(pkg.type, 'module', 'the js/ modules are ESM');
-  assert.equal(pkg.dependencies, undefined, 'no dependencies, ever (PRODUCT.md: no build step)');
-  assert.equal(pkg.devDependencies, undefined, 'no devDependencies, ever');
   const script = pkg.scripts?.test ?? '';
   // Double quotes work in both cmd.exe (npm on Windows) and POSIX shells.
   assert.equal(

@@ -17,3 +17,12 @@ android/*
 *.jks
 *.apk
 *.aab
+
+# Capacitor generated web bundle and native build state
+native-web/
+artifacts/
+android-native/.gradle/
+android-native/local.properties
+android-native/**/build/
+android-native/app/src/main/assets/
+android-native/.idea/

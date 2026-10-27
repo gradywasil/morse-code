@@ -1,0 +1,12 @@
+{
+  "appId": "com.arrangedgodly.morsecode",
+  "appName": "Morse",
+  "webDir": "native-web",
+  "android": {
+    "path": "android-native",
+    "backgroundColor": "#171008"
+  },
+  "server": {
+    "appStartPath": "/hardware-proof.html"
+  }
+}

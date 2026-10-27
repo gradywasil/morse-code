@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme.Hardware" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#171008</item>
+        <item name="android:navigationBarColor">#171008</item>
+        <item name="colorAccent">#FFB454</item>
+    </style>
+    <string name="hardware_title">Morse native hardware test</string>
+    <string name="hardware_explanation">Android controls this camera and flashlight directly. No images are recorded, saved, or uploaded. This screen does not decode Morse yet.</string>
+    <string name="preview_description">Live rear camera preview</string>
+    <string name="preview_start">Enable camera preview</string>
+    <string name="flashlight_on">Turn flashlight on</string>
+    <string name="flashlight_off">Turn flashlight off</string>
+    <string name="stop_hardware">Stop camera and flashlight</string>
+    <string name="open_settings">Open this app’s permission settings</string>
+    <string name="return_to_morse">Return to Morse</string>
+    <string name="hardware_idle">Ready. Choose the preview or flashlight test.</string>
+    <string name="hardware_stopped">Camera and flashlight stopped.</string>
+    <string name="permission_blocked">Camera permission was not granted. Try again, or open this app’s permission settings.</string>
+    <string name="camera_globally_blocked">Android’s Camera access switch is off. Turn it on in Quick Settings, then try again.</string>
+    <string name="hardware_details">%1$s · Android %2$s (API %3$d)\nMorse camera permission: %4$s\nIf camera access fails on Android 12+, check Camera access in Quick Settings.</string>
+    <string name="preview_starting">Starting rear camera preview…</string>
+    <string name="preview_live">Native camera preview is live.</string>
+    <string name="no_flashlight">No supported rear-camera flashlight was found.</string>
+    <string name="flashlight_is_on">Native flashlight is on. Tap again to turn it off.</string>
+    <string name="flashlight_is_off">Native flashlight is off.</string>
+    <string name="camera_error_code">Android camera error code: %1$d. Stop and retry; close other apps using the camera.</string>
+    <string name="hardware_error">%1$s: %2$s</string>
+</resources>

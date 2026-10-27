@@ -1,5 +1,10 @@
 # Android packaging with Bubblewrap
 
+The separate [native Android hardware proof](NATIVE-ANDROID-PROOF.md) now builds
+with Capacitor under `android-native/`. It tests app-owned camera permission,
+preview, and flashlight APIs. It has not replaced the Bubblewrap Play release
+described below.
+
 ## Current status
 
 The current Play upload artifact is **`android/app-release-bundle.aab`**,
