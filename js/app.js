@@ -51,6 +51,7 @@ import { translate } from './morse.js';
 import { schedule, SPEED_STEPS, DEFAULT_STEP_ID, dotMsOf } from './schedule.js';
 import { createTorchChannel } from './torch.js';
 import { createScreenChannel } from './screen.js';
+import { createBroadcastBack } from './broadcast-back.js';
 import { createAudioChannel } from './audio.js';
 import { createConductor } from './conductor.js';
 import {
@@ -609,8 +610,25 @@ function startBroadcast() {
 // Machine reactions (effects + the choreography entry)
 // ---------------------------------------------------------------------------
 
+const broadcastBack = createBroadcastBack({
+  history,
+  target: window,
+  onBack: () => {
+    clearBeat();
+    conductor.cancel();
+    if (machine.can(STATE_EVENTS.STOP)) machine.dispatch(STATE_EVENTS.STOP);
+    machine.dispatch(STATE_EVENTS.CANCEL);
+    machine.dispatch(STATE_EVENTS.RESET);
+    messageInput.focus({ preventScroll: true });
+  },
+});
+
 machine.addEventListener('change', (e) => {
   render(e.snapshot);
+  broadcastBack.setActive([
+    STATES.READY, STATES.BROADCASTING, STATES.BROADCASTING_ON_SCREEN,
+    STATES.PAUSED, STATES.PAUSED_ON_SCREEN,
+  ].includes(e.snapshot.state));
   if (e.snapshot.state === STATES.READY) runBeats();
 });
 
