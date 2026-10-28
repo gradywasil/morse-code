@@ -96,7 +96,8 @@ const GUM_VIDEO_CONSTRAINTS = Object.freeze({
  * Create a watcher. One instance per receive session.
  *
  * @param {{video: object, media?: object, clock?: object, doc?: object,
- *          timers?: object, raf?: Function, secureContext?: boolean, frameSource?: object}} options
+ *          timers?: object, raf?: Function, secureContext?: boolean, frameSource?: object,
+ *          contrastGate?: number}} options
  *   video — the host's preview <video> sink (the aperture). Required.
  *   media — {getUserMedia} (defaults to navigator.mediaDevices).
  *   clock — {now()} timestamp source (defaults to performance).
@@ -107,6 +108,8 @@ const GUM_VIDEO_CONSTRAINTS = Object.freeze({
  *   secureContext — isSecureContext gate (defaults to global flag).
  *   frameSource — optional native start(onFrame, onLost)/stop adapter delivering
  *     {tMs, presented, levels: 64 luminance tiles, clippingFraction}.
+ *   contrastGate — minimum local luminance spread; native input uses a higher
+ *     floor to reject small display/exposure fluctuations.
  * @throws {TypeError} if video is missing or not an object.
  */
 export function createWatcher(options = {}) {
@@ -115,6 +118,10 @@ export function createWatcher(options = {}) {
   }
   const video = options.video;
   const frameSource = options.frameSource ?? null;
+  const contrastGate = options.contrastGate ?? CONTRAST_GATE;
+  if (!Number.isFinite(contrastGate) || contrastGate <= 0 || contrastGate > 255) {
+    throw new TypeError('watcher contrastGate must be between 0 and 255');
+  }
   if (video === null || typeof video !== 'object') {
     throw new TypeError('createWatcher({video}) requires the preview video element');
   }
@@ -289,7 +296,7 @@ export function createWatcher(options = {}) {
     const range = onLevel - off;
 
     let edge = null;
-    if (range >= CONTRAST_GATE) {
+    if (range >= contrastGate) {
       // Hysteresis classification for this frame (hold inside the band).
       const hi = off + HYSTERESIS_ON * range;
       const lo = off + HYSTERESIS_OFF * range;
@@ -336,7 +343,7 @@ export function createWatcher(options = {}) {
       off: Math.round(off),
       on: Math.round(onLevel),
       contrast: Math.round(range),
-      hearing: range >= CONTRAST_GATE,
+      hearing: range >= contrastGate,
       saturated: clippingFraction > 0.5,
       clippingFraction,
       droppedFrames,

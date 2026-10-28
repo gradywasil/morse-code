@@ -1,11 +1,12 @@
 import { registerPlugin } from '../capacitor.js';
 import { createWatcher as createBrightnessWatcher } from './watcher.js';
-import { createNativeTorchChannel, createNativeFrameSource } from './native-channel-core.js';
+import { createNativeTorchChannel, createNativeFrameSource, NATIVE_CONTRAST_GATE } from './native-channel-core.js';
 
 const hardware = registerPlugin('MorseHardware');
 export const createTorchChannel = () => createNativeTorchChannel(hardware);
 export const createWatcher = options => createBrightnessWatcher({
-  ...options, frameSource: createNativeFrameSource(hardware, options.video),
+  ...options, contrastGate: NATIVE_CONTRAST_GATE,
+  frameSource: createNativeFrameSource(hardware, options.video),
 });
 
 document.addEventListener('click', event => {

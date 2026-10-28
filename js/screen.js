@@ -149,10 +149,12 @@ const SCREEN_CSS = `/* F4 screen-flash overlay (js/screen.js).
  *   raf?: (cb: () => void) => number,
  *   caf?: (handle: number) => void,
  *   fullscreen?: boolean,
+ *   trailingQuietMs?: number,
  *   onFullscreenChange?: (active: boolean) => void,
  * }} [options]
  *   - `doc`/`raf`/`caf`: DOM + frame scheduler (defaults: the globals).
  *   - `fullscreen: false` skips the Fullscreen API entirely (plain overlay).
+ *   - `trailingQuietMs`: conductor's dark interval before hiding the carrier.
  *   - `onFullscreenChange` fires on fullscreenchange (incl. the user's Esc
  *     exit mid-broadcast) with the live fullscreen state.
  * @returns {{
@@ -179,6 +181,10 @@ export function createScreenChannel(options = {}) {
       ? cancelAnimationFrame.bind(globalThis)
       : undefined);
   const wantFullscreen = options.fullscreen !== false;
+  const trailingQuietMs = options.trailingQuietMs ?? 0;
+  if (!Number.isFinite(trailingQuietMs) || trailingQuietMs < 0 || trailingQuietMs > 10000) {
+    throw new TypeError('screen trailingQuietMs must be between 0 and 10000');
+  }
   const onFullscreenChange =
     typeof options.onFullscreenChange === 'function' ? options.onFullscreenChange : null;
 
@@ -406,5 +412,5 @@ export function createScreenChannel(options = {}) {
     fsListenersBound = false;
   }
 
-  return { attach, on, off, hide, destroy, isLit, status };
+  return { attach, on, off, hide, destroy, isLit, status, trailingQuietMs };
 }

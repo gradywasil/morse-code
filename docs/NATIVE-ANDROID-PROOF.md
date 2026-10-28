@@ -1,6 +1,41 @@
 # Morse native Android hardware proof
 
-## Current integration build: version 0.3, code 3
+## Receiver correction: version 0.4, code 4
+
+Install `artifacts/morse-native-receiver-0.4-debug.apk` over Morse Native Test.
+SHA-256: `38CCACAA69C3856E9DC40B9F468B0821D46E4933F12FCFDC21BB2E23D1B08D65`.
+Package remains `com.arrangedgodly.morsecode.proof`; the debug signature verifies.
+
+The user confirmed the 0.3 flashlight and Back checks on their phone, then
+reported stray received letters before desktop screen transmission and a
+frequently missing last letter. Two deterministic regressions reproduce relevant
+failure paths: a 30-level luminance fluctuation decodes as a false H, and the
+screen broadcaster hides its overlay in the same tick as its final OFF edge.
+That OFF can be coalesced with hide before a black frame is painted.
+
+The native detector now requires 40 levels of local contrast (web camera default
+remains 20). This rejects the reproduced low-contrast flicker; weaker real light
+signals may require closer positioning. Screen broadcasts hold black for 5.5
+seconds after the final mark, covering the receiver's five-second completion
+window before the desktop interface returns. Flashlight timing is unchanged.
+Manual Stop/Back can still cancel the dark interval immediately.
+
+Validation: 600 Node tests pass, including noisy desktop pre-roll followed by
+exact HELLO DARK ROOM decoding at all three speeds and 24/30/60 fps. The final M
+settles before auto-completion, and a bright desktop returning after the dark
+interval cannot add text to the completed session. A real Chrome screen-channel
+check confirms final black painting, dark hold, and eventual overlay removal.
+Android debug assembly and lint pass (0 errors, 34 warnings). This correction has
+not yet been checked on a physical phone or Android 12.
+
+The public screen-broadcast correction was deployed from an allowlisted 30-file
+runtime staging directory. Cloudflare version:
+`2c3fea1b-a437-4597-b670-a38a2133286a`. All four changed JS files and
+`.well-known/assetlinks.json` were byte-verified on the custom domain and Worker
+hostname. Reload the desktop site before testing this APK. No Play release was
+uploaded. Source remains on `native-hardware-proof` pending migration to main.
+
+## Earlier integration build: version 0.3, code 3
 
 `artifacts/morse-native-test-debug.apk` opens the main Morse interface and installs
 as **Morse Native Test**, updating the earlier hardware proof through the same

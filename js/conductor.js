@@ -623,6 +623,8 @@ export function createConductor(options = {}) {
       audioReady = false;
       clockSource = 'none';
       channel = resolveChannel(); // torch preferred, screen fallback
+      // A receiver needs a visible OFF interval before the bright app returns.
+      if (channel === 'screen' && events.length) durationMs += screen.trailingQuietMs ?? 0;
       if (channel !== 'torch') torchIdx = events.length;
 
       // Both channel gestures open NOW (Broadcast tap), before any await.
@@ -849,6 +851,7 @@ export function createConductor(options = {}) {
     const midMark = Boolean(head && head.on === false);
 
     channel = 'screen';
+    durationMs = scheduleRef.durationMs + (screen.trailingQuietMs ?? 0);
     torchIdx = events.length; // retire the torch cursor
     torchDues = null;
     if (state === CONDUCTOR_STATES.RUNNING && midMark) {

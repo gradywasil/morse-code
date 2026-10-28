@@ -154,7 +154,8 @@ optionsPanel.addEventListener('click', event => { if (event.target === optionsPa
 
 const torch = createTorchChannel();
 // Keep the current app view: requesting fullscreen adds a browser notice even in a TWA.
-const screenChannel = createScreenChannel({ fullscreen: false });
+// Keep the screen black past the receiver's five-second silence completion.
+const screenChannel = createScreenChannel({ fullscreen: false, trailingQuietMs: 5500 });
 const audio = createAudioChannel();
 const machine = createStateMachine();
 

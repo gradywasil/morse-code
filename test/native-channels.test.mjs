@@ -1,10 +1,35 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createNativeTorchChannel, createNativeFrameSource } from '../native/web/js/native-channel-core.js';
+import { createNativeTorchChannel, createNativeFrameSource, NATIVE_CONTRAST_GATE } from '../native/web/js/native-channel-core.js';
 import { createWatcher } from '../js/watcher.js';
 import { translate } from '../js/morse.js';
-import { schedule } from '../js/schedule.js';
+import { schedule, SPEED_STEP_ORDER } from '../js/schedule.js';
 import { createReceiveSession, SILENCE_AUTO_COMPLETE_MS } from '../js/receive-session.js';
+
+test('native receiver does not turn low-contrast desktop flicker into letters', async () => {
+  let deliver;
+  const watcher = createWatcher({ video: {}, contrastGate: NATIVE_CONTRAST_GATE, frameSource: {
+    start: async callback => { deliver = callback; return { ok: true }; }, stop() {},
+  } });
+  const session = createReceiveSession();
+  let previous;
+  watcher.addEventListener('edge', edge => {
+    if (previous) {
+      if (edge.on) session.feedGap(edge.tMs - previous.tMs, edge.tMs);
+      else session.feedMark(edge.tMs - previous.tMs, edge.tMs);
+    }
+    previous = edge;
+  });
+  watcher.addEventListener('stats', stats => session.noteFrame(stats.tMs, { lightOn: stats.lightOn }));
+  await watcher.acquire();
+  for (let frame = 0; frame < 300; frame++) {
+    const tMs = frame * 1000 / 30;
+    const flicker = tMs >= 1000 && tMs < 2920 && Math.floor((tMs - 1000) / 240) % 2 === 0;
+    deliver({ tMs, presented: frame + 1, levels: Array(64).fill(flicker ? 130 : 100), clippingFraction: 0 });
+  }
+  assert.equal(session.status().text, '', 'ordinary low-contrast light must not produce a false H');
+  watcher.stop();
+});
 
 function pluginRig() {
   const listeners = new Map();
@@ -73,10 +98,10 @@ test('native receiver maps camera timestamps, tracks its preview, and drops fram
   assert.equal(rig.listeners.size, 0);
 });
 
-for (const fps of [24, 30, 60]) test(`native brightness tiles decode HELLO DARK ROOM at ${fps} fps`, async () => {
+for (const fps of [24, 30, 60]) for (const step of SPEED_STEP_ORDER) test(`native brightness tiles decode HELLO DARK ROOM at ${fps} fps / ${step}`, async () => {
   let deliver;
   let stops = 0;
-  const watcher = createWatcher({ video: {}, frameSource: {
+  const watcher = createWatcher({ video: {}, contrastGate: NATIVE_CONTRAST_GATE, frameSource: {
     start: async callback => { deliver = callback; return { ok: true }; },
     stop: () => { stops++; },
   } });
@@ -92,17 +117,22 @@ for (const fps of [24, 30, 60]) test(`native brightness tiles decode HELLO DARK 
   });
   watcher.addEventListener('stats', stats => session.noteFrame(stats.tMs, { lightOn: stats.lightOn }));
   await watcher.acquire();
-  const { events, durationMs } = schedule(translate('HELLO DARK ROOM').tokens, 'LEARNER');
+  const { events, durationMs, dotMs } = schedule(translate('HELLO DARK ROOM').tokens, step);
   let index = 0;
   let light = false;
-  for (let frame = 0; frame * 1000 / fps < 2000 + durationMs + SILENCE_AUTO_COMPLETE_MS + 500; frame++) {
+  let settledText = null;
+  for (let frame = 0; frame * 1000 / fps < 2000 + durationMs + SILENCE_AUTO_COMPLETE_MS + 1500; frame++) {
     const tMs = frame * 1000 / fps;
     while (index < events.length && events[index].tMs <= tMs - 2000) light = events[index++].on;
-    const levels = Array(64).fill(100);
+    const idleFlicker = tMs < 1600 && Math.floor(tMs / 240) % 2 === 0;
+    const desktopReturned = tMs > 2000 + durationMs + 5500;
+    const levels = Array(64).fill(idleFlicker ? 130 : 100);
     levels[0] = 255;
-    levels[63] = light ? 230 : 100;
+    levels[63] = desktopReturned ? 200 : (light ? 230 : (idleFlicker ? 130 : 100));
     deliver({ tMs, presented: frame + 1, levels, clippingFraction: 1 / 64 });
+    if (settledText === null && tMs >= 2000 + durationMs + 2.5 * dotMs) settledText = session.status().text;
   }
+  assert.equal(settledText, 'HELLO DARK ROOM', 'final M settles before silence completion');
   assert.equal(session.status().text, 'HELLO DARK ROOM');
   watcher.stop();
   const before = session.status().text;

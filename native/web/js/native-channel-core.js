@@ -1,4 +1,5 @@
 let nextSession = Date.now() * 1000;
+export const NATIVE_CONTRAST_GATE = 40;
 const sessionId = () => ++nextSession;
 const observed = promise => { promise.catch(() => {}); return promise; };
 

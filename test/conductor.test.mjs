@@ -263,6 +263,18 @@ const EE_BRISK = schedule(translate('EE').tokens, 'BRISK'); // dot 100, letter g
   // whole timeline (the T-F6 verifier's blast-radius finding).
 const EMPTY = schedule(translate('   ').tokens, 'LEARNER'); // whitespace-only
 
+test('screen transmission keeps its final dark gap before revealing the desktop', async () => {
+  const r = rig();
+  r.screenCh.trailingQuietMs = 5500;
+  await r.conductor.start(E_BRISK);
+  await r.clock.advanceTo(START_PAD_MS + E_BRISK.durationMs + 100);
+  assert.equal(ops(r.log, 'screen', ['hide']).length, 0,
+    'revealing the desktop immediately can swallow the final OFF edge');
+  await driveToIdle(r.clock);
+  assert.equal(ops(r.log, 'screen', ['hide']).at(-1).at,
+    START_PAD_MS + E_BRISK.durationMs + 5500);
+});
+
 test('native torch schedules once per start/resume and cancels on pause and stop', async () => {
   const r = rig({ torch: {} });
   const timelines = [];
