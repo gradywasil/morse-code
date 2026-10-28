@@ -18,6 +18,14 @@ test('native packaging keeps private development files out and works without rem
   assert.doesNotMatch(html, /https:\/\/fonts\.(?:googleapis|gstatic)\.com/);
   assert.match(html, /href="fonts.css"/);
   assert.match(html, /href="privacy.html"/);
+  assert.match(html, /data-native-settings/);
+  const app = readFileSync(new URL('../native-web/js/app.js', import.meta.url), 'utf8');
+  assert.match(app, /from '.\/native-channels.js'/);
+  assert.doesNotMatch(app, /from '.\/(torch|watcher).js'/);
+  assert.match(app, /href: 'https:\/\/morse.graydonwasil.com\/'/);
+  const policy = readFileSync(new URL('../native-web/privacy.html', import.meta.url), 'utf8');
+  assert.match(policy, /bundles its interface and fonts/);
+  assert.doesNotMatch(policy, /loads typefaces from/);
   const fontCss = readFileSync(new URL('../native-web/fonts.css', import.meta.url), 'utf8');
   assert.doesNotMatch(fontCss, /https?:/);
   assert.match(fontCss, /url\(fonts\//);

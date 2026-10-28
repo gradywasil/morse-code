@@ -7,6 +7,6 @@
     "backgroundColor": "#171008"
   },
   "server": {
-    "appStartPath": "/hardware-proof.html"
+    "appStartPath": "/index.html"
   }
 }

@@ -262,6 +262,27 @@ const EE_BRISK = schedule(translate('EE').tokens, 'BRISK'); // dot 100, letter g
   // [edgeT−120, edgeT) recur before every edge and cover effectively the
   // whole timeline (the T-F6 verifier's blast-radius finding).
 const EMPTY = schedule(translate('   ').tokens, 'LEARNER'); // whitespace-only
+
+test('native torch schedules once per start/resume and cancels on pause and stop', async () => {
+  const r = rig({ torch: {} });
+  const timelines = [];
+  r.torchCh.scheduleTimeline = async timeline => { timelines.push(timeline); };
+  await r.conductor.start(SOS_LEARNER);
+  assert.equal(timelines.length, 1);
+  assert.deepEqual(timelines[0].events, SOS_LEARNER.events);
+  assert.equal(timelines[0].positionMs, 0);
+  await r.clock.advance(1000);
+  assert.equal(r.torchCh.cmds.filter(command => command.op === 'on').length, 0,
+    'the JavaScript tick must not send individual native edges');
+  r.conductor.pause();
+  assert.equal(r.torchCh.cmds.at(-1).op, 'off');
+  await r.conductor.resume();
+  assert.equal(timelines.length, 2);
+  assert.ok(timelines[1].positionMs > 0);
+  r.conductor.cancel();
+  assert.equal(r.torchCh.cmds.at(-1).op, 'off');
+  assert.equal(r.clock.timers.size, 0);
+});
 // Defect-3 shapes: symbol gaps SHORTER than TORCH_LEAD_MS (120) — the
 // next mark's lead ON due precedes the current mark's OFF due, so the
 // post-resume catch-up stream is the only place commanded dark can

@@ -497,7 +497,7 @@ export function createConductor(options = {}) {
 
     // 1) Torch — lead-shifted, fire-and-forget (R2 §5.3: never awaited).
     while (channel === 'torch' && torchIdx < n && torchDueMs(torchIdx) <= t) {
-      torchCommand(events[torchIdx].on);
+      if (typeof torch?.scheduleTimeline !== 'function') torchCommand(events[torchIdx].on);
       torchIdx++;
     }
 
@@ -543,6 +543,12 @@ export function createConductor(options = {}) {
       /* The channel left torch-ready synchronously (e.g. it was lost);
          F3's 'lost' event has already driven the takeover. Nothing to do. */
     }
+  }
+
+  function scheduleNativeTorch(position) {
+    if (channel !== 'torch' || typeof torch?.scheduleTimeline !== 'function') return;
+    const delayMs = Math.max(0, (anchorSec + position / 1000 - clockFn()) * 1000);
+    torch.scheduleTimeline({ events, positionMs: position, delayMs }).catch(noop);
   }
 
   function screenCommand(on) {
@@ -660,6 +666,7 @@ export function createConductor(options = {}) {
         finishComplete();
         return { started: true, completed: true };
       }
+      scheduleNativeTorch(0);
       tick(); // immediate first pass: opens the first lookahead window
       return { started: true };
     } finally {
@@ -754,6 +761,7 @@ export function createConductor(options = {}) {
       }
 
       state = CONDUCTOR_STATES.RUNNING;
+      scheduleNativeTorch(pausedAtMs);
       safeEmit(cbs.onResume, { positionMs: pausedAtMs });
       if (ev) safeEmit(cbs.onProgress, progressOf(ev, pausedAtMs));
       tick();

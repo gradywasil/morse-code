@@ -7,8 +7,8 @@ android {
         applicationId "com.arrangedgodly.morsecode"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "0.2-hardware-proof"
+        versionCode 3
+        versionName "0.3-native-test"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -18,8 +18,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix ".proof"
-            resValue "string", "app_name", "Morse Hardware Test"
-            resValue "string", "title_activity_main", "Morse Hardware Test"
+            resValue "string", "app_name", "Morse Native Test"
+            resValue "string", "title_activity_main", "Morse Native Test"
         }
         release {
             minifyEnabled false

@@ -1,8 +1,54 @@
 # Morse native Android hardware proof
 
-This is the first Capacitor proof build, alongside the existing Bubblewrap
-project. It is not a Play release or a completed migration of the receiver.
-The website and existing Play-installed app are unchanged.
+## Current integration build: version 0.3, code 3
+
+`artifacts/morse-native-test-debug.apk` opens the main Morse interface and installs
+as **Morse Native Test**, updating the earlier hardware proof through the same
+debug package `com.arrangedgodly.morsecode.proof`. The website and existing
+Play-installed app are unchanged. This is not a signed Play release.
+
+APK SHA-256: `22FEF3E03DA8E13BE15256B146ED1D65680DFA9EA47FE3F5DEAE94DB0DBB5038`.
+The APK signature was verified with Android's `apksigner`; version and package
+were checked from the built APK with `aapt2`.
+
+The broadcaster now sends its full edge timeline to an Android HandlerThread;
+pause, stop, release, navigation, and backgrounding cancel queued operations.
+The receiver uses CameraX preview and on-device luminance sampling: 32x32 points
+are aggregated into 64 brightness tiles and passed to the existing detector and
+decoder. Camera images are not recorded or uploaded. Manual-capable devices use
+a 5 ms exposure and ISO 200, clamped to supported ranges; other devices keep
+automatic exposure. This initial native exposure posture needs device testing.
+
+Android Camera permission belongs to this app. Denial screens include a direct
+app-settings button. The native Back callback dismisses dialogs, stops listening,
+or returns an active broadcast to the composer through its history guard.
+The interface, fonts, and native-specific privacy policy are bundled locally.
+Copied message links continue to point at the public website.
+
+Integration validation:
+
+- All 592 Node tests pass, including native adapter cancellation, timestamp
+  mapping, receiver cleanup, conductor timeline start/pause/resume/cancel, and
+  exact synthetic text decoding at 24, 30, and 60 fps.
+- A headless Chrome check of the bundled interface with a mocked native bridge
+  exercises transmission scheduling, Back to the composer, receiver start/stop,
+  and verifies that browser camera acquisition is never called. The receiver
+  interface screenshot was inspected; this does not test a native preview.
+- Gradle debug assembly and Android lint pass (0 errors, 34 warnings).
+- The integrated emulator run could not start: the host has insufficient disk
+  space for the AVD. The earlier proof emulator checks below apply only to 0.2.
+- The user accepted the earlier hardware proof on their phone. Integrated
+  physical flashlight timing, physical camera decoding, Android 12, and Play
+  distribution of the replacement remain unverified.
+
+Next phone check: install this APK over the earlier proof, send a short message
+using the flashlight, stop or press Back during transmission, and receive the
+same message from another device. Check that Home turns off the flashlight and
+camera indicator. The original closed-test Play app can remain installed.
+
+## Earlier standalone proof: version 0.2
+
+The following records the first Capacitor hardware proof alongside Bubblewrap.
 
 ## Installable artifact
 

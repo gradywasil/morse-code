@@ -96,7 +96,7 @@ const GUM_VIDEO_CONSTRAINTS = Object.freeze({
  * Create a watcher. One instance per receive session.
  *
  * @param {{video: object, media?: object, clock?: object, doc?: object,
- *          timers?: object, raf?: Function, secureContext?: boolean}} options
+ *          timers?: object, raf?: Function, secureContext?: boolean, frameSource?: object}} options
  *   video — the host's preview <video> sink (the aperture). Required.
  *   media — {getUserMedia} (defaults to navigator.mediaDevices).
  *   clock — {now()} timestamp source (defaults to performance).
@@ -105,6 +105,8 @@ const GUM_VIDEO_CONSTRAINTS = Object.freeze({
  *   timers — {setTimeout, clearTimeout} (capability probe).
  *   raf — requestAnimationFrame for the fallback loop.
  *   secureContext — isSecureContext gate (defaults to global flag).
+ *   frameSource — optional native start(onFrame, onLost)/stop adapter delivering
+ *     {tMs, presented, levels: 64 luminance tiles, clippingFraction}.
  * @throws {TypeError} if video is missing or not an object.
  */
 export function createWatcher(options = {}) {
@@ -112,6 +114,7 @@ export function createWatcher(options = {}) {
     throw new TypeError('createWatcher(options) expects an options object');
   }
   const video = options.video;
+  const frameSource = options.frameSource ?? null;
   if (video === null || typeof video !== 'object') {
     throw new TypeError('createWatcher({video}) requires the preview video element');
   }
@@ -168,6 +171,7 @@ export function createWatcher(options = {}) {
 
   function stopAll() {
     generation += 1; // cancels the sampling loop at its next guard
+    if (frameSource) Promise.resolve(frameSource.stop()).catch(() => {});
     if (capsTimer && timers?.clearTimeout) { timers.clearTimeout(capsTimer); capsTimer = null; }
     if (pagehideBound && doc) { doc.removeEventListener('pagehide', pagehideBound); pagehideBound = null; }
     void resetExposure(); // fire-and-forget before the track dies
@@ -245,8 +249,13 @@ export function createWatcher(options = {}) {
     return sorted[idx];
   }
 
-  function onFrame(frameTMs, presented) {
+  function onFrame(frameTMs, presented, measurement = null) {
     if (state !== WATCHER_STATES.WATCHING) return;
+    if (!Number.isFinite(frameTMs)) return;
+    if (measurement && (measurement.levels?.length !== TILE_COUNT
+        || !measurement.levels.every(value => Number.isFinite(value) && value >= 0 && value <= 255)
+        || !Number.isFinite(measurement.clippingFraction)
+        || measurement.clippingFraction < 0 || measurement.clippingFraction > 1)) return;
     if (lastFrameTMs !== null && frameTMs < lastFrameTMs) return; // never time-travel
     if (lastPresented !== null && presented !== null && presented > lastPresented + 1) {
       droppedFrames += presented - lastPresented - 1;
@@ -254,7 +263,7 @@ export function createWatcher(options = {}) {
     }
     lastPresented = presented;
 
-    const { levels, clippingFraction } = measureLevel();
+    const { levels, clippingFraction } = measurement ?? measureLevel();
     const tMs = frameTMs;
 
     windowSamples.push({ tMs, levels });
@@ -433,6 +442,30 @@ export function createWatcher(options = {}) {
       if (!secureContext) {
         setState(WATCHER_STATES.ERROR);
         return { ok: false, outcome: WATCHER_OUTCOMES.INSECURE };
+      }
+      if (frameSource) {
+        setState(WATCHER_STATES.ACQUIRING);
+        const gen = ++generation;
+        try {
+          const result = await frameSource.start(
+            frame => {
+              if (gen === generation) onFrame(frame.tMs, frame.presented, frame);
+            },
+            () => { if (gen === generation) dispatch('lost', {}); }
+          );
+          if (gen !== generation) return { ok: false, outcome: WATCHER_OUTCOMES.FAILED };
+          if (!result.ok) {
+            setState(WATCHER_STATES.ERROR);
+            return result;
+          }
+          setState(WATCHER_STATES.WATCHING);
+          pagehideBound = () => stopAll();
+          doc?.addEventListener('pagehide', pagehideBound);
+          return { ok: true, outcome: WATCHER_OUTCOMES.OK, usingRVFC: false };
+        } catch (error) {
+          if (gen === generation) setState(WATCHER_STATES.ERROR);
+          return { ok: false, outcome: outcomeFromError(error) };
+        }
       }
       const gum = media ?? (typeof navigator !== 'undefined' ? navigator.mediaDevices : null);
       if (!gum || typeof gum.getUserMedia !== 'function') {
