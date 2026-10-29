@@ -6,6 +6,20 @@ import { translate } from '../js/morse.js';
 import { schedule, SPEED_STEP_ORDER } from '../js/schedule.js';
 import { createReceiveSession, SILENCE_AUTO_COMPLETE_MS } from '../js/receive-session.js';
 
+test('a stray opening dash separated by quiet does not contaminate HELLO', () => {
+  const session = createReceiveSession();
+  session.feedMark(720, 720);
+  session.feedGap(2200, 2920);
+  const { events, durationMs } = schedule(translate('HELLO').tokens, 'LEARNER');
+  for (let i = 1; i < events.length; i++) {
+    const ms = events[i].tMs - events[i - 1].tMs;
+    if (events[i].on) session.feedGap(ms, 2920 + events[i].tMs);
+    else session.feedMark(ms, 2920 + events[i].tMs);
+  }
+  session.noteFrame(2920 + durationMs + 1000);
+  assert.equal(session.status().text, 'HELLO');
+});
+
 test('native receiver does not turn low-contrast desktop flicker into letters', async () => {
   let deliver;
   const watcher = createWatcher({ video: {}, contrastGate: NATIVE_CONTRAST_GATE, frameSource: {
@@ -121,16 +135,16 @@ for (const fps of [24, 30, 60]) for (const step of SPEED_STEP_ORDER) test(`nativ
   let index = 0;
   let light = false;
   let settledText = null;
-  for (let frame = 0; frame * 1000 / fps < 2000 + durationMs + SILENCE_AUTO_COMPLETE_MS + 1500; frame++) {
+  for (let frame = 0; frame * 1000 / fps < 4200 + durationMs + SILENCE_AUTO_COMPLETE_MS + 1500; frame++) {
     const tMs = frame * 1000 / fps;
-    while (index < events.length && events[index].tMs <= tMs - 2000) light = events[index++].on;
-    const idleFlicker = tMs < 1600 && Math.floor(tMs / 240) % 2 === 0;
-    const desktopReturned = tMs > 2000 + durationMs + 5500;
-    const levels = Array(64).fill(idleFlicker ? 130 : 100);
+    while (index < events.length && events[index].tMs <= tMs - 4200) light = events[index++].on;
+    const idleLevel = tMs >= 200 && tMs < 920 ? 230 : 100;
+    const desktopReturned = tMs > 4200 + durationMs + 5500;
+    const levels = Array(64).fill(idleLevel);
     levels[0] = 255;
-    levels[63] = desktopReturned ? 200 : (light ? 230 : (idleFlicker ? 130 : 100));
+    levels[63] = desktopReturned ? 200 : (light ? 230 : idleLevel);
     deliver({ tMs, presented: frame + 1, levels, clippingFraction: 1 / 64 });
-    if (settledText === null && tMs >= 2000 + durationMs + 2.5 * dotMs) settledText = session.status().text;
+    if (settledText === null && tMs >= 4200 + durationMs + 2.5 * dotMs) settledText = session.status().text;
   }
   assert.equal(settledText, 'HELLO DARK ROOM', 'final M settles before silence completion');
   assert.equal(session.status().text, 'HELLO DARK ROOM');

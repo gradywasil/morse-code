@@ -82,7 +82,7 @@ export function createReceiveSession(options = {}) {
 
   const emit = (event) => { if (onEvent !== null) onEvent(event); };
 
-  const tracker = createClockTracker({ bootstrapFromGaps: true });
+  let tracker = createClockTracker({ bootstrapFromGaps: true });
   let activeDecoder = createDecoder({
     unitMs: () => tracker.unitMs(),
     onEvent: (e) => tracker.observe(e),
@@ -177,6 +177,19 @@ export function createReceiveSession(options = {}) {
     }
     if (kind === 'gap' && discardNextGap) {
       discardNextGap = false;   // D8: the gap after it is unmeasurable
+      return [];
+    }
+
+    // The sender's opening quiet exceeds every supported Morse word gap
+    // (maximum 1680 ms). Discard unconfirmed desktop light before that boundary.
+    if (kind === 'gap' && ms >= 2000 && !recovered) {
+      tracker = createClockTracker({ bootstrapFromGaps: true });
+      activeDecoder = createDecoder({ unitMs: () => tracker.unitMs(), onEvent: e => tracker.observe(e) });
+      periodBuffer.length = 0;
+      markPool.length = 0;
+      lastMarkEndTMs = null;
+      emit({ type: 'replay-start' });
+      setMeter(METER.SILENCE);
       return [];
     }
 

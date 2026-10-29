@@ -182,6 +182,10 @@ export function createScreenChannel(options = {}) {
       : undefined);
   const wantFullscreen = options.fullscreen !== false;
   const trailingQuietMs = options.trailingQuietMs ?? 0;
+  const leadingQuietMs = options.leadingQuietMs ?? 0;
+  if (!Number.isFinite(leadingQuietMs) || leadingQuietMs < 0 || leadingQuietMs > 10000) {
+    throw new TypeError('screen leadingQuietMs must be between 0 and 10000');
+  }
   if (!Number.isFinite(trailingQuietMs) || trailingQuietMs < 0 || trailingQuietMs > 10000) {
     throw new TypeError('screen trailingQuietMs must be between 0 and 10000');
   }
@@ -238,6 +242,12 @@ export function createScreenChannel(options = {}) {
   function off() {
     requireAttached('off()');
     if (desired === null) return Promise.resolve();
+    desired = 'dark';
+    return settle();
+  }
+
+  function prepare() {
+    requireAttached('prepare()');
     desired = 'dark';
     return settle();
   }
@@ -412,5 +422,5 @@ export function createScreenChannel(options = {}) {
     fsListenersBound = false;
   }
 
-  return { attach, on, off, hide, destroy, isLit, status, trailingQuietMs };
+  return { attach, prepare, on, off, hide, destroy, isLit, status, trailingQuietMs, leadingQuietMs };
 }

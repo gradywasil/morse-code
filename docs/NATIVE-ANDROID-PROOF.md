@@ -1,5 +1,30 @@
 # Morse native Android hardware proof
 
+## Opening correction: version 0.5, code 5
+
+The user reports 0.4 improved stray-light rejection and the final letter, but
+desktop light before transmission still sometimes changes HELLO to BELLO.
+H is four dots; B replaces its first dot with a dash, consistent with an opening
+mark stretched by desktop light. This interpretation is not a captured phone trace.
+
+Screen broadcasts now prepare a black carrier for 2200 ms before their first
+flash. Before timing lock, the receiver discards pending periods across gaps
+of at least 2000 ms, longer than the supported 1680 ms maximum word gap. Locked
+messages retain their text. The existing 5500 ms final dark interval is retained.
+
+APK: `artifacts/morse-native-opening-0.5-debug.apk`, same debug package/signature.
+SHA-256: `35B5FCF420159B40422DE33B5FCEAD75A84A753E97C0E3303C2E53AC70DA7658`.
+All 602 tests pass. Native sample tests include a strong opening stray pulse,
+quiet boundary, then exact HELLO DARK ROOM at every speed and 24/30/60 fps.
+Chrome exercised initial black hold, first flash, final dark hold and return.
+Debug assembly and lint pass (0 errors, 34 warnings); APK signature verified.
+Physical verification of this correction and Android 12 remain outstanding.
+
+Public deployment: `0928c609-8bc2-4ca4-b7fa-dd082daeec3a`, from an allowlisted
+30-file runtime stage. Changed runtime bytes and Digital Asset Links match on
+both public hosts. Refresh the desktop website and install 0.5 before retesting.
+Source remains on `native-hardware-proof`; no Play upload was made.
+
 ## Receiver correction: version 0.4, code 4
 
 Install `artifacts/morse-native-receiver-0.4-debug.apk` over Morse Native Test.

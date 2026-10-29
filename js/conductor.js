@@ -658,7 +658,8 @@ export function createConductor(options = {}) {
         );
       }
 
-      anchorSec = clockFn() + startPadMs / 1000;
+      if (channel === 'screen' && events.length && screen.leadingQuietMs > 0) await screen.prepare();
+      anchorSec = clockFn() + (startPadMs + (channel === 'screen' ? screen.leadingQuietMs ?? 0 : 0)) / 1000;
       bindTorchLost();
       state = CONDUCTOR_STATES.RUNNING;
 

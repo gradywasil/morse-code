@@ -275,6 +275,16 @@ test('screen transmission keeps its final dark gap before revealing the desktop'
     START_PAD_MS + E_BRISK.durationMs + 5500);
 });
 
+test('screen begins with a quiet black interval before its first dot', async () => {
+  const r = rig();
+  r.screenCh.leadingQuietMs = 2200;
+  r.screenCh.prepare = () => r.screenCh.off();
+  await r.conductor.start(E_BRISK);
+  await driveToIdle(r.clock);
+  assert.equal(ops(r.log, 'screen', ['off'])[0].at, 0);
+  assert.equal(ops(r.log, 'screen', ['on'])[0].at, START_PAD_MS + 2200);
+});
+
 test('native torch schedules once per start/resume and cancels on pause and stop', async () => {
   const r = rig({ torch: {} });
   const timelines = [];
