@@ -3,6 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const output = new URL('../native-web/', import.meta.url);
+const release = process.argv.includes('--release');
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const outputPath = resolve(fileURLToPath(output));
 if (dirname(outputPath) !== root || outputPath !== resolve(root, 'native-web')) throw new Error('Invalid native bundle directory');
@@ -21,7 +22,12 @@ html = html.replace('Your browser controls the flashlight through a live camera 
 html = html.replaceAll('Allow camera access for your browser in Android settings and for this site in browser settings, then try again.', 'Allow Camera permission for Morse Native Test in Android settings, then try again.');
 html = html.replaceAll('A blocked request may not show a new prompt.', 'A blocked request may require a change in app settings.');
 html = html.replaceAll('<p class="permission-settings">', '<button class="key" type="button" data-native-settings>OPEN APP SETTINGS</button><p class="permission-settings">');
-html = html.replace('<section class="audio-option"', '<p><a href="hardware-proof.html">Native hardware diagnostics</a></p>\n    <section class="audio-option"');
+if (release) {
+  html = html.replaceAll('Morse Native Test', 'Morse');
+  for (const name of ['hardware-proof.html', 'hardware-proof.js']) await rm(new URL(name, output));
+} else {
+  html = html.replace('<section class="audio-option"', '<p><a href="hardware-proof.html">Native hardware diagnostics</a></p>\n    <section class="audio-option"');
+}
 await writeFile(new URL('index.html', output), html);
 const appFile = new URL('js/app.js', output);
 let app = await readFile(appFile, 'utf8');
@@ -29,4 +35,4 @@ app = app.replace("from './torch.js'", "from './native-channels.js'");
 app = app.replace("from './watcher.js'", "from './native-channels.js'");
 app = app.replace('shareUrl(encode(messageInput.value, stepId))', "shareUrl(encode(messageInput.value, stepId), { href: 'https://morse.graydonwasil.com/' })");
 await writeFile(appFile, app);
-console.log('Bundled Morse assets and native hardware test page.');
+console.log(`Bundled Morse assets for ${release ? 'release' : 'hardware testing'}.`);

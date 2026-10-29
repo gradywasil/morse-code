@@ -1,4 +1,11 @@
-# Android packaging with Bubblewrap
+# Android packaging
+
+The native replacement is now prepared for Play as version **1.1.0**, code **6**.
+Use the signed `artifacts/morse-1.1.0-play.aab`; see
+[native Play release preparation](NATIVE-PLAY-RELEASE.md) for verification and
+upload instructions. It has not been uploaded or accepted by Play yet.
+
+## Earlier Bubblewrap release
 
 The separate [native Android hardware proof](NATIVE-ANDROID-PROOF.md) now builds
 with Capacitor under `android-native/`. It tests app-owned camera permission,
