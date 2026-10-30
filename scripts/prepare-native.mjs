@@ -22,6 +22,10 @@ html = html.replace('Your browser controls the flashlight through a live camera 
 html = html.replaceAll('Allow camera access for your browser in Android settings and for this site in browser settings, then try again.', 'Allow Camera permission for Morse Native Test in Android settings, then try again.');
 html = html.replaceAll('A blocked request may not show a new prompt.', 'A blocked request may require a change in app settings.');
 html = html.replaceAll('<p class="permission-settings">', '<button class="key" type="button" data-native-settings>OPEN APP SETTINGS</button><p class="permission-settings">');
+html = html.replace('<p class="gate-first">', '<label class="native-warning-choice"><input id="remember-flash-warning" type="checkbox"> Don’t show this warning again</label><p class="gate-first">');
+html = html.replace(/<ul class="gate-facts">[\s\S]*?<\/ul>/, '');
+html = html.replace('<section class="audio-option"', '<p><button class="key" type="button" data-show-flash-warning>SHOW FLASHING-LIGHT WARNING AGAIN</button></p><section class="audio-option"');
+html = html.replace('href="fonts.css">', 'href="fonts.css">\n  <link rel="stylesheet" href="native.css">');
 if (release) {
   html = html.replaceAll('Morse Native Test', 'Morse');
   for (const name of ['hardware-proof.html', 'hardware-proof.js']) await rm(new URL(name, output));
@@ -33,6 +37,7 @@ const appFile = new URL('js/app.js', output);
 let app = await readFile(appFile, 'utf8');
 app = app.replace("from './torch.js'", "from './native-channels.js'");
 app = app.replace("from './watcher.js'", "from './native-channels.js'");
+app = app.replace("if (result.outcome === 'torch-ready') fireTestDot();", '');
 app = app.replace('shareUrl(encode(messageInput.value, stepId))', "shareUrl(encode(messageInput.value, stepId), { href: 'https://morse.graydonwasil.com/' })");
 await writeFile(appFile, app);
 console.log(`Bundled Morse assets for ${release ? 'release' : 'hardware testing'}.`);

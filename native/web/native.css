@@ -1,0 +1,17 @@
+.native-warning-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin-block: 12px;
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.native-warning-choice input {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  accent-color: #ffb74d;
+}
+.gate-first, .gate-returning { display: none !important; }

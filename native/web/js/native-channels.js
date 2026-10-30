@@ -1,8 +1,10 @@
 import { registerPlugin } from '../capacitor.js';
+import { installNativeOnboarding } from './native-onboarding.js';
 import { createWatcher as createBrightnessWatcher } from './watcher.js';
 import { createNativeTorchChannel, createNativeFrameSource, NATIVE_CONTRAST_GATE } from './native-channel-core.js';
 
 const hardware = registerPlugin('MorseHardware');
+installNativeOnboarding(hardware);
 export const createTorchChannel = () => createNativeTorchChannel(hardware);
 export const createWatcher = options => createBrightnessWatcher({
   ...options, contrastGate: NATIVE_CONTRAST_GATE,

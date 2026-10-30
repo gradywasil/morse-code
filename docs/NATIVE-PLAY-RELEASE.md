@@ -1,7 +1,55 @@
 # Morse native Play release preparation
 
+## Current update: 1.1.1, code 7
+
+Prepared October 30, 2026 after user reports that the Play-installed 1.1.0 works
+well but repeats explanatory permission screens too often.
+
+Upload `artifacts/morse-1.1.1-play.aab`. SHA-256:
+`295F8075DF1689C6CC5B1CBCADC528E8B1B204B2B7F75C37DB19B3BB5F3447D9`.
+Optional separate test APK: `artifacts/morse-native-1.1.1-debug.apk`.
+The Play package and upload key are unchanged. This new bundle is not uploaded.
+
+Native launch now checks Camera permission without opening the camera. Missing
+permission is requested at most once per Activity/plugin lifetime; a denied
+fresh launch retries under Android's permission rules. Hardware acquisition
+checks permission but never triggers additional requests during that launch.
+Permanent denial still requires Android app settings. Browser behavior is unchanged.
+
+Native-only onboarding skips camera/flashlight explanations, automatically
+continues an acknowledged broadcast into transmission, and enters Receive
+without another explanation. The brief flashing-light warning is acknowledged
+once per page session by default. Checking Don't show again saves only a local
+warning preference, and Broadcast options can restore the warning. This
+preference does not affect Android permission grants. Diagnostic flashing on
+flashlight acquisition is removed from the native interface.
+
+Validation: all 602 existing Node tests pass. Chrome integration at 320x568,
+390x844 and 1440x900 verifies repeat broadcasts, persisted opt-out after reload,
+receiver entry, restoring the warning, declining without saving, and settings
+recovery after a permission failure. Updated warning captures were viewed:
+the checkbox and action buttons fit at 320x568 after trimming the native facts.
+An Android 16 emulator confirms the actual first launch prompt, a retry after
+denial and fresh launch, no prompt after grant and fresh launch, and no active
+camera clients during launch. A separate CDP check could not run because Android
+WebView rejects Playwright's Browser.setDownloadBehavior command. Same-launch
+request suppression is source-checked, not independently exercised via CDP.
+
+Debug assembly, release bundle and release lint pass (0 errors, 34 warnings).
+Jarsigner verifies, bundletool validates and decodes package/version, and all 510
+non-signature bundle entries match the unsigned output. The temporary signing
+password file was deleted. Physical phone verification of 1.1.1 remains pending.
+Public privacy disclosure deployment: `0595a4f5-8b38-4e78-a4cb-1f8ebf0000a6`;
+HTTPS 200 and exact bytes confirmed for `/privacy-native`.
+
+Suggested release name: `1.1.1 - Smoother permissions`.
+Notes: fewer repeated permission screens; remembered flashing-light warning
+choice; faster access to broadcasting and receiving.
+
+## Previous release: 1.1.0, code 6
+
 Prepared October 29, 2026, from the accepted native 0.5 receiver behavior.
-The release has not been uploaded, reviewed, or tested as a Play-installed update.
+The user subsequently uploaded it and reports improved behavior from Play testers.
 
 ## Upload artifact
 

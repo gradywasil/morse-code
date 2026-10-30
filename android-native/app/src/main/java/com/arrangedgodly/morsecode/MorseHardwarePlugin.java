@@ -61,7 +61,7 @@ public class MorseHardwarePlugin extends Plugin {
     private volatile long txGeneration;
     private volatile long rxSession;
     private long stoppedRx;
-    private long epoch;
+    private boolean launchPermissionChecked;
     private ProcessCameraProvider provider;
     private ImageAnalysis analysis;
     private PreviewView preview;
@@ -81,8 +81,17 @@ public class MorseHardwarePlugin extends Plugin {
     private void withPermission(PluginCall call) {
         getActivity().runOnUiThread(() -> {
             if (getPermissionState("camera") == PermissionState.GRANTED) permitted(call);
-            else {
-                call.getData().put("permissionEpoch", epoch);
+            else call.resolve(new JSObject().put("ok", false).put("outcome", "permission-denied"));
+        });
+    }
+
+    @PluginMethod
+    public void prepareCamera(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            if (getPermissionState("camera") == PermissionState.GRANTED || launchPermissionChecked) {
+                permissionResult(call);
+            } else {
+                launchPermissionChecked = true;
                 requestPermissionForAlias("camera", call, "permissionResult");
             }
         });
@@ -90,11 +99,8 @@ public class MorseHardwarePlugin extends Plugin {
 
     @PermissionCallback
     private void permissionResult(PluginCall call) {
-        if (getPermissionState("camera") != PermissionState.GRANTED) {
-            call.resolve(new JSObject().put("ok", false).put("outcome", "permission-denied"));
-        } else if (call.getLong("permissionEpoch", -1L) != epoch) {
-            call.resolve(new JSObject().put("ok", false).put("outcome", "cancelled"));
-        } else permitted(call);
+        boolean granted = getPermissionState("camera") == PermissionState.GRANTED;
+        call.resolve(new JSObject().put("ok", granted).put("outcome", granted ? "granted" : "permission-denied"));
     }
 
     private void permitted(PluginCall call) {
@@ -407,7 +413,6 @@ public class MorseHardwarePlugin extends Plugin {
 
     @Override
     protected void handleOnStop() {
-        epoch++;
         closeReceiver();
         flashlightOff(false);
     }
@@ -415,7 +420,6 @@ public class MorseHardwarePlugin extends Plugin {
     @Override
     public Boolean shouldOverrideLoad(Uri url) {
         getActivity().runOnUiThread(() -> {
-            epoch++;
             closeReceiver();
             flashlightOff(true);
         });

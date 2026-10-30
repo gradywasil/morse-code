@@ -1,7 +1,7 @@
 # Android packaging
 
-The native replacement is now prepared for Play as version **1.1.0**, code **6**.
-Use the signed `artifacts/morse-1.1.0-play.aab`; see
+The latest native update is prepared for Play as version **1.1.1**, code **7**.
+Use the signed `artifacts/morse-1.1.1-play.aab`; see
 [native Play release preparation](NATIVE-PLAY-RELEASE.md) for verification and
 upload instructions. It has not been uploaded or accepted by Play yet.
 
