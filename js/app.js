@@ -63,6 +63,16 @@ import {
 } from './states.js';
 import { encode, readHash, applyHash, shareUrl } from './hash.js';
 import { COPY, speedLine, progressLine } from './copy.js';
+import { createDeviceStore } from './device-store.js';
+import { createReceivedLog } from './received-log.js';
+import { createScreenAwake } from './screen-awake.js';
+import { textToMorse, morseToText } from './translator.js';
+import { FLASH_COLORS, flashColorById } from './flash-color.js';
+import {
+  MODES, ACCENTS, BASE_DARK, modeById, accentById, resolveModeId, buildTokens, tokensToCss, isLightMode,
+} from './themes.js';
+import { createDropdown } from './dropdown.js';
+import { LOGO_VARS, logoSvg, logoColors, logoDataUrl } from './logo.js';
 
 // ---------------------------------------------------------------------------
 // Tape geometry — the I1 world's exact punch metrics (css/main.css:
@@ -159,6 +169,61 @@ const screenChannel = createScreenChannel({ fullscreen: false, leadingQuietMs: 2
 const audio = createAudioChannel();
 const machine = createStateMachine();
 
+// On-device extras. The web build's store forgets on close; the native build's
+// persists (see js/device-store.js). The screen colour is the sender's choice.
+const deviceStore = createDeviceStore();
+const FLASH_COLOR_KEY = 'flash-color';
+let flashColor = flashColorById(deviceStore.get(FLASH_COLOR_KEY));
+screenChannel.setColor(flashColor.hex);
+
+// Hold the phone awake while a run is committed or the camera is listening,
+// so a short auto-lock cannot cut a message off mid-way.
+const awake = createScreenAwake();
+const translatorOpen = $('#translator-open');
+const AWAKE_STATES = new Set([
+  STATES.READY, STATES.BROADCASTING, STATES.BROADCASTING_ON_SCREEN,
+  STATES.PAUSED, STATES.PAUSED_ON_SCREEN, 'receive-armed', 'receive-active',
+]);
+let keepAwake = deviceStore.get('keep-awake') !== 'off';
+function syncAwake() {
+  const busy = AWAKE_STATES.has(body.dataset.state);
+  awake.set(busy && keepAwake);
+  translatorOpen.disabled = busy; // no modal over a live flash or a listening session
+}
+
+// Themes: a MODE (light, dark, contrast, or AUTO = follow the phone) and an
+// ACCENT, combined into colour tokens set on <html>. Dark + amber is the stylesheet.
+let modeChoice = modeById(deviceStore.get('mode')).id;
+let accentChoice = accentById(deviceStore.get('accent')).id;
+let accentDropdown = null;
+let appliedTokens = [];
+// The mark follows the theme: live in the header, and as the browser-tab icon.
+const brandMark = $('.brand-mark');
+brandMark.innerHTML = logoSvg(LOGO_VARS, 'brand');
+brandMark.dataset.live = '';
+const tabIcon = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+const lightQuery = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: light)') : null;
+function applyTheme() {
+  const mode = resolveModeId(modeChoice, lightQuery?.matches === true);
+  const tokens = buildTokens(mode, accentChoice);
+  const root = document.documentElement;
+  for (const name of appliedTokens) root.style.removeProperty(`--${name}`);
+  for (const [name, value] of Object.entries(tokens)) root.style.setProperty(`--${name}`, value);
+  appliedTokens = Object.keys(tokens);
+  const scheme = mode === 'light' ? 'light' : 'dark';
+  root.style.colorScheme = scheme;
+  root.dataset.mode = mode;
+  // Saved so a native launch can paint the right colours before any script runs.
+  deviceStore.set('theme-css', [tokensToCss(tokens), `color-scheme:${scheme}`].filter(Boolean).join(';'));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = tokens.ground ?? BASE_DARK.ground;
+  if (tabIcon) tabIcon.href = logoDataUrl(logoColors(mode, { ...BASE_DARK, ...tokens }));
+  if (typeof window.morseNativeSystemBars === 'function') window.morseNativeSystemBars(isLightMode(mode));
+  accentDropdown?.setDisabled(mode === 'contrast'); // high contrast has its own fixed colours
+}
+lightQuery?.addEventListener?.('change', () => { if (modeChoice === 'auto') applyTheme(); });
+applyTheme();
+
 // The run being spoken.
 let liveSchedule = null;      // {events, durationMs, markCount} (conductor's)
 let marksTotal = 0;
@@ -192,6 +257,9 @@ const FROZEN_STATES = new Set([
   STATES.PAUSED,
   STATES.PAUSED_ON_SCREEN,
 ]);
+
+/** States where marks are actually being spoken. */
+const LIVE_STATES = new Set([STATES.BROADCASTING, STATES.BROADCASTING_ON_SCREEN]);
 
 /** States that render a live progress line. */
 const PROGRESS_STATES = new Set([
@@ -270,6 +338,22 @@ function setHead(letterIdx, spokenThrough, live) {
   }
 }
 
+// While the operator types, the newest punch feeds under the head so every
+// press is visible even on a phone; committing a run rewinds to the start.
+let followTyping = false;
+let rewindTimer = null;
+
+function rewindTape() {
+  if (!followTyping) return;
+  followTyping = false;
+  body.classList.add('tape-rewinding');
+  if (rewindTimer !== null) clearTimeout(rewindTimer);
+  rewindTimer = setTimeout(() => {
+    rewindTimer = null;
+    body.classList.remove('tape-rewinding');
+  }, 520);
+}
+
 /** Head placement per machine phase (progress events own the live traverse). */
 function applyHeadForState(state) {
   if (!tape.groups.length) {
@@ -278,6 +362,8 @@ function applyHeadForState(state) {
     setHead(tape.groups.length - 1, tape.groups.length, false);
   } else if (PROGRESS_STATES.has(state)) {
     // broadcasting / paused / error: keep the head where the schedule put it
+  } else if (followTyping) {
+    setHead(tape.groups.length - 1, 0, false);
   } else {
     setHead(0, 0, false);
   }
@@ -293,6 +379,7 @@ function requestTapeRender() {
     if (FROZEN_STATES.has(machine.state())) return;
     const text = messageInput.value;
     if (text !== lastRenderedText) {
+      followTyping = true;
       buildTape(text, { markNew: true }); // typing presses new groups
       applyHeadForState(machine.state());
     }
@@ -342,6 +429,7 @@ function render(snapshot) {
 
   body.dataset.state = state;
   syncFlowPanel(state);
+  syncAwake();
   if (state !== STATES.READY) clearBeat();
   // The fire pulse lives only inside a broadcast.
   if (state !== STATES.BROADCASTING && state !== STATES.BROADCASTING_ON_SCREEN) {
@@ -374,7 +462,13 @@ function render(snapshot) {
   if (state === STATES.READY && messageInput.value !== lastRenderedText) {
     buildTape(messageInput.value);
   }
+  if (state !== STATES.IDLE && state !== STATES.TORCH_READY && state !== STATES.SCREEN_MODE) {
+    rewindTape(); // leaving the composer: the tape winds back to its first letter
+  }
   applyHeadForState(state);
+  renderStage(snapshot);
+  renderReceipt(snapshot);
+  if (!LIVE_STATES.has(state)) stopHaptics();
 
   // Seed the progress line on ENTRY to a progress-bearing state (the T-I2
   // verification finding): onProgress only writes while events flow, so
@@ -401,10 +495,13 @@ function updateTransportAvailability() {
 function updateToneLabels() {
   // The label names the CURRENT state, not the click's action: tone on at
   // unmuted boot ("TONE"), "TONE OFF" only while actually muted.
-  const label = audio.isMuted() ? COPY.transport.toneOff : COPY.transport.tone;
   for (const key of toneKeys) {
-    key.textContent = label;
+    key.textContent = audio.isMuted() ? COPY.toggles.off : COPY.toggles.on;
     key.setAttribute('aria-pressed', String(!audio.isMuted()));
+  }
+  for (const key of hapticKeys) {
+    key.textContent = hapticsOn ? COPY.toggles.on : COPY.toggles.off;
+    key.setAttribute('aria-pressed', String(hapticsOn));
   }
 }
 
@@ -505,6 +602,165 @@ function onProgress(event) {
   setHead(letterIdx, letterIdx, true);
   firePulse();
   renderProgressLine();
+  stageProgress(letterIdx, event.symbolIdx ?? 0, event.mark);
+  buzzMark(event.mark);
+}
+
+// ---------------------------------------------------------------------------
+// The screen stage: while the screen is the light, a dark strip above the
+// flash keeps the message, the count, and STOP in view. CSS shows it only
+// while the flash overlay is mounted; this keeps its contents current.
+// ---------------------------------------------------------------------------
+
+const stage = $('.screen-stage');
+const stageLegend = stage.querySelector('.stage-legend');
+const stageLine = stage.querySelector('.stage-line');
+const stageProgressEl = stage.querySelector('.stage-progress');
+const stageLetters = stage.querySelector('.stage-letters');
+const stageMarks = stage.querySelector('.stage-marks');
+let stageGroups = [];   // per letterIdx: {el, marks}
+let stageLetterIdx = -1;
+let stageSpoken = false;
+let stageTailTimer = null;
+
+function clearStageTail() {
+  if (stageTailTimer !== null) clearTimeout(stageTailTimer);
+  stageTailTimer = null;
+}
+
+function buildStage(text) {
+  stageLetters.replaceChildren();
+  stageMarks.replaceChildren();
+  stageGroups = [];
+  stageLetterIdx = -1;
+  stageSpoken = false;
+  stageProgressEl.textContent = '';
+  stage.style.setProperty('--stage-progress', '0%');
+  const byChar = new Map(translate(text).letters.map((l) => [l.charIdx, l]));
+  for (let i = 0; i < text.length; i++) {
+    const li = document.createElement('li');
+    li.textContent = /\s/.test(text[i]) ? '\u00a0' : text[i];
+    const letter = byChar.get(i);
+    if (letter) stageGroups[letter.letterIdx] = { el: li, marks: letter.marks };
+    else li.className = 'stage-gap';
+    stageLetters.appendChild(li);
+  }
+  stageLetters.style.setProperty('--stage-shift', '0px');
+}
+
+function stageProgress(letterIdx, symbolIdx, mark) {
+  const group = stageGroups[letterIdx];
+  if (!group) return;
+  if (letterIdx !== stageLetterIdx) {
+    for (let i = 0; i < stageGroups.length; i++) {
+      const el = stageGroups[i]?.el;
+      if (!el) continue;
+      el.classList.toggle('is-spoken', i < letterIdx);
+      el.classList.toggle('is-live', i === letterIdx);
+    }
+    stageLetters.style.setProperty(
+      '--stage-shift', `${group.el.offsetLeft + group.el.offsetWidth / 2}px`);
+    stageMarks.replaceChildren(...group.marks.map((m) => {
+      const pill = document.createElement('span');
+      pill.className = `stage-pill stage-${m}`;
+      return pill;
+    }));
+    stageLetterIdx = letterIdx;
+  }
+  Array.from(stageMarks.children).forEach((pill, i) => {
+    pill.classList.toggle('is-spoken', i < symbolIdx);
+    pill.classList.toggle('is-live', i === symbolIdx);
+  });
+  stage.dataset.phase = 'live';
+  stageLegend.textContent = COPY.screenStage.live;
+  if (marksTotal > 0) {
+    stageProgressEl.textContent = progressLine(Math.max(1, lastMarksStarted), marksTotal);
+    stage.style.setProperty('--stage-progress', `${(lastMarksStarted / marksTotal) * 100}%`);
+    stageSpoken = lastMarksStarted >= marksTotal;
+  }
+  clearStageTail();
+  if (stageSpoken) {
+    // The last mark: once its light ends, the screen holds dark so the
+    // receiver can finish — say so instead of leaving a silent black screen.
+    const units = mark === 'dash' ? 3 : 1;
+    stageTailTimer = setTimeout(() => {
+      stageTailTimer = null;
+      if (LIVE_STATES.has(machine.state())) renderStage({ state: STATES.DONE });
+    }, units * dotMsOf(SPEED_STEPS[stepId].wpm) + 60);
+  }
+}
+
+function renderStage(snapshot) {
+  const state = snapshot.state;
+  if (state !== STATES.DONE && !LIVE_STATES.has(state)) clearStageTail();
+  if (state === STATES.READY) buildStage(messageInput.value);
+  let phase = stage.dataset.phase;
+  if (state === STATES.READY) phase = 'lead';
+  else if (state === STATES.PAUSED || state === STATES.PAUSED_ON_SCREEN) phase = 'held';
+  else if (LIVE_STATES.has(state)) phase = stageLetterIdx < 0 ? 'lead' : 'live';
+  else if (state === STATES.DONE) phase = 'tail';
+  stage.dataset.phase = phase;
+  stageLegend.textContent = COPY.screenStage[phase] ?? COPY.screenStage.lead;
+  stageLine.textContent = phase === 'tail' ? COPY.screenStage.tailLine : COPY.screenStage.leadLine;
+  if (phase === 'tail') {
+    for (const g of stageGroups) g?.el.classList.remove('is-live');
+    for (const pill of stageMarks.children) pill.classList.remove('is-live');
+    if (stageSpoken) for (const g of stageGroups) g?.el.classList.add('is-spoken');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Vibration: the phone in the hand keys each mark. Memory-only preference;
+// offered only where the platform exposes the Vibration API.
+// ---------------------------------------------------------------------------
+
+const canVibrate = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+const hapticKeys = Array.from(document.querySelectorAll('[data-action="haptics"]'));
+let hapticsOn = canVibrate;
+let buzzing = false;
+if (canVibrate) for (const row of document.querySelectorAll('.haptic-option')) row.hidden = false;
+
+function buzzMark(mark) {
+  if (!hapticsOn) return;
+  const dotMs = dotMsOf(SPEED_STEPS[stepId].wpm);
+  // Slightly shorter than the light so consecutive marks stay distinct.
+  buzzing = true;
+  try { navigator.vibrate(Math.round(mark === 'dash' ? dotMs * 2.6 : dotMs * 0.7)); } catch { /* ignored */ }
+}
+
+function stopHaptics() {
+  if (!buzzing) return;
+  buzzing = false;
+  try { navigator.vibrate(0); } catch { /* ignored */ }
+}
+
+// ---------------------------------------------------------------------------
+// The finish: a printed receipt and the share key.
+// ---------------------------------------------------------------------------
+
+const receiptLegend = $('.receipt-legend');
+const receiptDetail = $('.receipt-detail');
+const shareKey = $('[data-action="share"]');
+let shareKeyTimer = null;
+
+function renderReceipt(snapshot) {
+  if (snapshot.state !== STATES.DONE || !liveSchedule) return;
+  const stopped = snapshot.doneReason === 'stopped';
+  const letters = tape.groups.filter((g) => g.known).length;
+  const seconds = Math.max(1, Math.round(liveSchedule.durationMs / 1000));
+  receiptLegend.textContent = stopped ? COPY.done.stoppedLegend : COPY.done.sentLegend;
+  receiptDetail.textContent = stopped
+    ? progressLine(Math.max(1, lastMarksStarted), marksTotal)
+    : `${letters} ${letters === 1 ? 'LETTER' : 'LETTERS'} · ${seconds}S`;
+}
+
+function flashShareKey(label) {
+  shareKey.textContent = label;
+  if (shareKeyTimer !== null) clearTimeout(shareKeyTimer);
+  shareKeyTimer = setTimeout(() => {
+    shareKeyTimer = null;
+    shareKey.textContent = COPY.transport.share;
+  }, 2400);
 }
 
 // The fire pulse (I3): one bounded lamp pulse per mark, only while
@@ -679,6 +935,23 @@ const ACTIONS = {
     Promise.resolve(screenChannel.destroy()).catch(() => {}); // exit fullscreen
     machine.dispatch(STATE_EVENTS.RESET);
   },
+  share: () => {
+    writeHash();
+    const url = shareUrl(encode(messageInput.value, stepId));
+    if (typeof navigator.share === 'function') {
+      navigator.share({ title: COPY.done.shareTitle, text: COPY.done.shareText, url }).catch(() => {});
+      return;
+    }
+    copyText(url).then(
+      () => flashShareKey(COPY.done.shareCopied),
+      () => flashShareKey(COPY.done.shareRefused)
+    );
+  },
+  haptics: () => {
+    hapticsOn = !hapticsOn;
+    if (!hapticsOn) stopHaptics();
+    updateToneLabels();
+  },
   'copy-link': () => {
     writeHash(); // the address bar already holds the shareable fragment
     copyText(shareUrl(encode(messageInput.value, stepId))).then(
@@ -725,9 +998,9 @@ function showShareOutcome(el) {
 }
 
 for (const button of document.querySelectorAll('[data-action]')) {
-  button.addEventListener('click', () => {
+  button.addEventListener('click', (event) => {
     const run = ACTIONS[button.dataset.action];
-    if (run) run();
+    if (run) run(event);
   });
 }
 
@@ -1010,6 +1283,7 @@ function beginListen() {
     watcher.addEventListener('edge', onWatcherEdge);
     watcher.addEventListener('stats', onWatcherStats);
     watcher.addEventListener('lost', () => {
+      logReceived({ partial: true }); // the text heard so far is kept, in the log too
       rxMachine.dispatch(RECEIVE_EVENTS.CAMERA_LOST, { reason: 'ended' });
     });
   }
@@ -1089,6 +1363,7 @@ function onSessionEvent(event) {
       break;
     case 'complete':
       rxCompletedText = event.text;
+      logReceived({ partial: Boolean(event.partial) });
       requestTranscript();
       if (event.source === 'silence') {
         rxMachine.dispatch(RECEIVE_EVENTS.AUTO_COMPLETE, { partial: event.partial });
@@ -1112,6 +1387,7 @@ function renderRx() {
   const state = rxMachine.state;
   body.dataset.state = state;
   syncFlowPanel(state);
+  syncAwake();
   if (state !== RECEIVE_STATES.ARMED && state !== RECEIVE_STATES.ACTIVE) {
     clearFire(); // the lamp fires only while light speaks
   }
@@ -1127,6 +1403,7 @@ function renderRx() {
     receiveDoneNote.textContent = snap.donePartial
       ? RX.donePartial
       : (snap.doneSource === 'silence' ? RX.quietClosed : RX.states[RECEIVE_STATES.DONE].line);
+    if (rxLogged) receiveDoneNote.textContent += ` ${COPY.log.saved}`;
   }
   freezeModeLever();
 }
@@ -1180,6 +1457,7 @@ for (const radio of modeRadios) {
 }
 
 function resetRxSurface() {
+  rxLogged = false;
   rxCompletedText = '';
   rxLastWord = '';
   rxSession = null;
@@ -1261,6 +1539,302 @@ flowPanel.addEventListener('cancel', event => {
 function sessionTextNow() {
   return rxSession !== null ? rxSession.status().text : '';
 }
+
+// -- the received log -------------------------------------------------------------
+// Every finished message is filed here so it can be read back later. The web
+// build keeps it for the open page; the native build keeps it on the device.
+
+const receivedLog = createReceivedLog({ store: deviceStore });
+const logPanel = $('#log-panel');
+const logList = $('[data-log-list]');
+const logEmpty = $('[data-log-empty]');
+const logNote = $('[data-log-note]');
+const logClear = $('[data-log-clear]');
+const logOpen = $('#log-open');
+const logCount = $('[data-log-count]');
+let rxLogged = false;
+let clearArmedTimer = null;
+
+function logReceived({ partial }) {
+  if (rxLogged) return;
+  const text = (rxCompletedText || sessionTextNow()).trim();
+  if (!text) return;
+  rxLogged = true;
+  receivedLog.add({ text, partial });
+}
+
+function formatWhen(at) {
+  try {
+    return new Date(at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+function logKey(label, action) {
+  const key = document.createElement('button');
+  key.className = 'key';
+  key.type = 'button';
+  key.dataset.logAction = action;
+  key.textContent = label;
+  return key;
+}
+
+function renderLog() {
+  const entries = receivedLog.list();
+  logList.replaceChildren(...entries.map((entry) => {
+    const item = document.createElement('li');
+    item.className = 'log-entry';
+    item.dataset.id = entry.id;
+    const meta = document.createElement('div');
+    meta.className = 'log-meta';
+    const time = document.createElement('time');
+    time.dateTime = new Date(entry.at).toISOString();
+    time.textContent = formatWhen(entry.at);
+    meta.append(time);
+    if (entry.partial) {
+      const flag = document.createElement('span');
+      flag.className = 'log-partial';
+      flag.textContent = COPY.log.partial;
+      meta.append(flag);
+    }
+    const text = document.createElement('p');
+    text.className = 'log-text';
+    text.textContent = entry.text; // textContent: received text is untrusted
+    const keys = document.createElement('div');
+    keys.className = 'log-keys';
+    keys.append(logKey(COPY.log.copy, 'copy'), logKey(COPY.log.morse, 'morse'), logKey(COPY.log.delete, 'delete'));
+    item.append(meta, text, keys);
+    return item;
+  }));
+  logEmpty.hidden = entries.length > 0;
+  logClear.disabled = entries.length === 0;
+  logNote.textContent = receivedLog.persistent ? COPY.log.savedOnDevice : COPY.log.pageOnly;
+  logCount.textContent = entries.length ? String(entries.length) : '';
+}
+
+receivedLog.onChange(renderLog);
+renderLog();
+
+logOpen.addEventListener('click', () => logPanel.showModal());
+$('#log-close').addEventListener('click', () => logPanel.close());
+logPanel.addEventListener('click', (event) => { if (event.target === logPanel) logPanel.close(); });
+logPanel.addEventListener('close', () => {
+  if (clearArmedTimer !== null) clearTimeout(clearArmedTimer);
+  clearArmedTimer = null;
+  logClear.textContent = COPY.log.clear;
+});
+
+logList.addEventListener('click', (event) => {
+  const key = event.target.closest('[data-log-action]');
+  const item = key?.closest('.log-entry');
+  if (!key || !item) return;
+  const entry = receivedLog.list().find((e) => e.id === item.dataset.id);
+  if (!entry) return;
+  if (key.dataset.logAction === 'delete') {
+    receivedLog.remove(entry.id);
+  } else if (key.dataset.logAction === 'morse') {
+    logPanel.close();
+    openTranslator(entry.text);
+  } else {
+    copyText(entry.text).then(
+      () => flashKey(key, COPY.log.copied),
+      () => flashKey(key, COPY.log.copyFailed)
+    );
+  }
+});
+
+// Two taps to clear: the first arms the key, the second empties the log.
+logClear.addEventListener('click', () => {
+  if (clearArmedTimer === null) {
+    logClear.textContent = COPY.log.clearConfirm;
+    clearArmedTimer = setTimeout(() => {
+      clearArmedTimer = null;
+      logClear.textContent = COPY.log.clear;
+    }, 3000);
+    return;
+  }
+  clearTimeout(clearArmedTimer);
+  clearArmedTimer = null;
+  logClear.textContent = COPY.log.clear;
+  receivedLog.clear();
+});
+
+/** Show a short outcome on a key, then restore its label. */
+function flashKey(key, label) {
+  const original = key.dataset.label ?? key.textContent;
+  key.dataset.label = original;
+  key.textContent = label;
+  clearTimeout(Number(key.dataset.flashTimer));
+  key.dataset.flashTimer = String(setTimeout(() => { key.textContent = original; }, 1600));
+}
+
+// -- the translator ----------------------------------------------------------------
+// Text and written Morse, side by side: edit either and the other follows, with
+// the letter-by-letter signs underneath so the pairing is visible.
+
+const trPanel = $('#translator-panel');
+const trText = $('#tr-text');
+const trMorse = $('#tr-morse');
+const trNote = $('[data-tr-note]');
+const trChips = $('[data-tr-chips]');
+const TR_CHIP_LIMIT = 300;
+
+function renderChips(items) {
+  const shown = items.slice(0, TR_CHIP_LIMIT);
+  const nodes = shown.map((item) => {
+    const chip = document.createElement('li');
+    if (item.gap) {
+      chip.className = 'tr-chip tr-word';
+      return chip;
+    }
+    chip.className = item.known ? 'tr-chip' : 'tr-chip is-unknown';
+    const spoken = [...item.code].map((c) => (c === '.' ? 'dot' : c === '-' ? 'dash' : 'unknown')).join(' ');
+    chip.setAttribute('aria-label', `${item.char}: ${spoken}`);
+    const letter = document.createElement('span');
+    letter.className = 'tr-char';
+    letter.setAttribute('aria-hidden', 'true');
+    letter.textContent = item.char;
+    const marks = document.createElement('span');
+    marks.className = 'tr-marks';
+    marks.setAttribute('aria-hidden', 'true');
+    for (const c of item.code) {
+      const mark = document.createElement('i');
+      mark.className = c === '.' ? 'm-dot' : c === '-' ? 'm-dash' : 'm-odd';
+      marks.append(mark);
+    }
+    chip.append(letter, marks);
+    return chip;
+  });
+  if (items.length > shown.length) {
+    const more = document.createElement('li');
+    more.className = 'tr-more';
+    more.textContent = '…';
+    nodes.push(more);
+  }
+  trChips.replaceChildren(...nodes);
+}
+
+function translateFromText() {
+  const result = textToMorse(trText.value);
+  trMorse.value = result.morse;
+  trNote.textContent = result.unknown.length
+    ? `${COPY.translator.noSign} ${[...new Set(result.unknown)].join(' ')}`
+    : '';
+  renderChips(result.items);
+}
+
+function translateFromMorse() {
+  const result = morseToText(trMorse.value);
+  trText.value = result.text;
+  const n = result.unknown.length;
+  trNote.textContent = n ? `${n} ${n === 1 ? COPY.translator.unreadOne : COPY.translator.unreadMany}` : '';
+  renderChips(result.items);
+}
+
+trText.addEventListener('input', translateFromText);
+trMorse.addEventListener('input', translateFromMorse);
+
+function openTranslator(text) {
+  if (typeof text === 'string') {
+    trText.value = text;
+    translateFromText();
+  }
+  trPanel.showModal();
+}
+translatorOpen.addEventListener('click', () => openTranslator());
+$('#translator-close').addEventListener('click', () => trPanel.close());
+trPanel.addEventListener('click', (event) => { if (event.target === trPanel) trPanel.close(); });
+
+ACTIONS['copy-tr-text'] = (event) => copyFrom(trText.value, event);
+ACTIONS['copy-tr-morse'] = (event) => copyFrom(trMorse.value, event);
+function copyFrom(value, event) {
+  const key = event?.currentTarget ?? null;
+  if (!value.trim()) return;
+  copyText(value).then(
+    () => key && flashKey(key, COPY.translator.copied),
+    () => key && flashKey(key, COPY.translator.copyFailed)
+  );
+}
+
+// Copying the message just sent, as Morse a friend can paste into the translator.
+ACTIONS['copy-morse'] = (event) => {
+  const key = event?.currentTarget ?? null;
+  const { morse } = textToMorse(messageInput.value);
+  if (!morse) return;
+  copyText(morse).then(
+    () => key && flashKey(key, COPY.done.morseCopied),
+    () => key && flashKey(key, COPY.done.shareRefused)
+  );
+};
+
+// -- the screen light colour (accessibility) ---------------------------------------
+
+createDropdown({
+  host: $('[data-dropdown="flash-color"]'),
+  options: FLASH_COLORS.map((c) => ({ id: c.id, label: c.label, swatch: c.hex })),
+  value: flashColor.id,
+  onChange: (id) => {
+    flashColor = flashColorById(id);
+    screenChannel.setColor(flashColor.hex);
+    deviceStore.set(FLASH_COLOR_KEY, flashColor.id);
+  },
+});
+
+// -- the appearance controls -------------------------------------------------------
+
+const modeHost = $('[data-segmented="mode"]');
+for (const mode of MODES) {
+  const id = `mode-${mode.id}`;
+  const radio = document.createElement('input');
+  radio.type = 'radio';
+  radio.name = 'theme-mode';
+  radio.id = id;
+  radio.value = mode.id;
+  radio.className = 'seg-radio';
+  radio.checked = mode.id === modeChoice;
+  const label = document.createElement('label');
+  label.className = 'key seg-key';
+  label.htmlFor = id;
+  label.textContent = mode.label;
+  modeHost.append(radio, label);
+  radio.addEventListener('change', () => {
+    if (!radio.checked) return;
+    modeChoice = mode.id;
+    deviceStore.set('mode', mode.id);
+    applyTheme();
+  });
+}
+accentDropdown = createDropdown({
+  host: $('[data-dropdown="accent"]'),
+  options: ACCENTS.map((a) => ({ id: a.id, label: a.label, swatch: a.swatch })),
+  value: accentChoice,
+  onChange: (id) => {
+    accentChoice = id;
+    deviceStore.set('accent', id);
+    applyTheme();
+  },
+});
+applyTheme(); // now that the accent control exists, settle its disabled state
+
+// The app menu (top right of the header).
+const menuPanel = $('#menu-panel');
+$('#menu-open').addEventListener('click', () => menuPanel.showModal());
+$('#menu-close').addEventListener('click', () => menuPanel.close());
+menuPanel.addEventListener('click', (event) => { if (event.target === menuPanel) menuPanel.close(); });
+
+// -- keep the screen on (a preference; on by default) -----------------------------
+
+const awakeKey = $('[data-action="keep-awake"]');
+function renderAwakeKey() {
+  awakeKey.textContent = keepAwake ? COPY.toggles.on : COPY.toggles.off;
+  awakeKey.setAttribute('aria-pressed', String(keepAwake));
+}
+ACTIONS['keep-awake'] = () => {
+  keepAwake = !keepAwake;
+  deviceStore.set('keep-awake', keepAwake ? 'on' : 'off');
+  renderAwakeKey();
+  syncAwake();
+};
+renderAwakeKey();
 
 // Boot: the receive machine parks at its own idle; the lever turns it on.
 body.dataset.mode = mode;

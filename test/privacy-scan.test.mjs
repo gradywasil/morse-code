@@ -143,11 +143,21 @@ test('PRIVACY: zero network call surfaces in shipped JS; index.html requests onl
   // must be the fixed Google Fonts assets, which carry no user data.
   const canonical = '<link rel="canonical" href="https://morse.graydonwasil.com/">';
   assert.ok(indexHtml.includes(canonical), 'canonical metadata names the production origin');
-  const external = [...indexHtml.replace(canonical, '').matchAll(/(?:href|src)="(https?:)?\/\/([^"]+)"/g)].map((m) => m[2]);
+  // Hyperlinks (<a href>) request nothing until a person taps them, so they are
+  // checked separately below. Everything else that names a URL LOADS it.
+  const withoutLinks = indexHtml.replace(canonical, '').replace(/<a\b[^>]*>/gi, '');
+  const external = [...withoutLinks.matchAll(/(?:href|src)="(https?:)?\/\/([^"]+)"/g)].map((m) => m[2]);
   assert.ok(external.length >= 3, `expected the fonts pair, found ${JSON.stringify(external)}`);
   for (const hostPath of external) {
     assert.match(hostPath, /^(fonts\.googleapis\.com|fonts\.gstatic\.com)(\/|$)/, `only Google Fonts may be external, found ${hostPath}`);
   }
+
+  // The only outbound hyperlink is the community Discord, opened in a new tab
+  // with no referrer or opener, and only on a tap.
+  const outbound = [...indexHtml.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"[^>]*>/gi)];
+  assert.deepEqual(outbound.map((m) => m[1]), ['https://discord.gg/NvyRQcYPrz']);
+  assert.match(outbound[0][0], /target="_blank"/);
+  assert.match(outbound[0][0], /rel="noopener noreferrer"/);
 });
 
 test('Q2 detector self-test: the token scanner catches planted violations (non-vacuous)', () => {

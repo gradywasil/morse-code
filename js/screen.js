@@ -136,7 +136,7 @@ const SCREEN_CSS = `/* F4 screen-flash overlay (js/screen.js).
    reduced-motion for all decorative motion instead. */
 .${SCREEN_CLASSES.overlay}{position:fixed;top:0;right:0;bottom:0;left:0;z-index:${OVERLAY_Z_INDEX};display:none;background:#000;pointer-events:none;}
 .${SCREEN_CLASSES.overlay}.${SCREEN_CLASSES.dark}{display:block;background:#000;}
-.${SCREEN_CLASSES.overlay}.${SCREEN_CLASSES.lit}{display:block;background:#fff;}
+.${SCREEN_CLASSES.overlay}.${SCREEN_CLASSES.lit}{display:block;background:var(--mcb-flash-color,#fff);}
 `;
 
 /**
@@ -199,6 +199,7 @@ export function createScreenChannel(options = {}) {
   let waiters = [];     // promise resolvers carried by the pending frame
   let fsAttempt = null; // memoized fullscreen attempt (reset by destroy)
   let fsListenersBound = false;
+  let flashColor = null; // #rrggbb for the lit state; null = white
 
   /** Install the overlay (synchronously) and attempt fullscreen. Idempotent. */
   async function attach() {
@@ -221,12 +222,31 @@ export function createScreenChannel(options = {}) {
     // Decorative for AT: the flash duplicates what the audio channel and the
     // tape readout already carry (multimodal per PRODUCT.md).
     overlayEl.setAttribute('aria-hidden', 'true');
+    paintColor();
     (doc.body || doc.documentElement).appendChild(overlayEl);
     bindFullscreenListeners();
 
     if (wantFullscreen && fsAttempt === null) requestFullscreenQuietly();
     const fullscreen = await fsAttempt;
     return { fullscreen: Boolean(fullscreen) };
+  }
+
+  /** Choose the colour of the lit state (accessibility: a gentler light than
+   *  white). Takes effect on the next lit frame; black stays black, so the
+   *  on/off contrast the receiver reads is untouched. null/undefined = white. */
+  function setColor(hex) {
+    if (hex != null && !/^#[0-9a-f]{6}$/i.test(hex)) {
+      throw new TypeError('screen setColor expects #rrggbb or null');
+    }
+    flashColor = hex ?? null;
+    paintColor();
+  }
+
+  function paintColor() {
+    const style = overlayEl?.style;
+    if (!style) return;
+    if (flashColor) style.setProperty?.('--mcb-flash-color', flashColor);
+    else style.removeProperty?.('--mcb-flash-color');
   }
 
   /** Desired-state command: white on the next frame (raises the carrier). */
@@ -422,5 +442,5 @@ export function createScreenChannel(options = {}) {
     fsListenersBound = false;
   }
 
-  return { attach, prepare, on, off, hide, destroy, isLit, status, trailingQuietMs, leadingQuietMs };
+  return { attach, prepare, on, off, hide, destroy, isLit, status, setColor, trailingQuietMs, leadingQuietMs };
 }

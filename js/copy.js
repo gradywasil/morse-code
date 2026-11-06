@@ -312,7 +312,32 @@ export const COPY = deepFreeze({
   done: {
     complete: 'BROADCAST COMPLETE. THE TAPE KEEPS THE MESSAGE.',
     stopped: 'STOPPED EARLY. THE TAPE KEEPS THE MESSAGE.',
-    offer: 'REPLAY IT, OR SHARE THE LINK.',
+    offer: 'REPLAY IT, OR COPY IT AS MORSE.',
+    morseCopied: 'MORSE COPIED',
+    sentLegend: 'SENT',
+    stoppedLegend: 'STOPPED',
+    shareCopied: 'LINK COPIED',
+    shareRefused: 'COPY REFUSED',
+    shareTitle: 'A message in Morse',
+    shareText: 'Open this link to send it as flashing light.',
+  },
+
+  // The screen stage: the strip that stays dark while the screen flashes ------------
+  screenStage: {
+    lead: 'GET READY',
+    leadLine: 'FACE THE SCREEN TOWARD THE RECEIVER.',
+    live: 'SENDING BY SCREEN',
+    held: 'PAUSED',
+    tail: 'SENT',
+    tailLine: 'KEEP HOLDING. THE RECEIVER IS FINISHING.',
+  },
+
+  // Options toggles (the label names the current state) -------------------------------
+  toggles: {
+    sound: 'SOUND',
+    vibration: 'VIBRATION',
+    on: 'ON',
+    off: 'OFF',
   },
 
   // Faults -------------------------------------------------------------------------
@@ -331,6 +356,34 @@ export const COPY = deepFreeze({
   },
 
   // Shared-link auto-fill outcomes -------------------------------------------------------
+  // The received log: every finished message, filed for later -----------------
+  log: {
+    open: 'LOG',
+    title: 'RECEIVED LOG',
+    empty: 'NOTHING RECEIVED YET. EACH MESSAGE YOU RECEIVE IS FILED HERE.',
+    saved: 'SAVED TO THE LOG.',
+    savedOnDevice: 'Kept on this device only. Never uploaded.',
+    pageOnly: 'Kept until you close this page. Never uploaded.',
+    partial: 'PARTIAL',
+    copy: 'COPY',
+    morse: 'MORSE',
+    delete: 'DELETE',
+    copied: 'COPIED',
+    copyFailed: 'REFUSED',
+    clear: 'CLEAR LOG',
+    clearConfirm: 'TAP AGAIN TO CLEAR',
+  },
+
+  // The translator: text and written Morse, both ways ---------------------------
+  translator: {
+    title: 'MORSE TRANSLATOR',
+    noSign: 'NO MORSE SIGN FOR:',
+    unreadOne: 'SIGN NOT RECOGNISED. SHOWN AS ?',
+    unreadMany: 'SIGNS NOT RECOGNISED. SHOWN AS ?',
+    copied: 'COPIED',
+    copyFailed: 'REFUSED',
+  },
+
   shared: {
     loaded: 'MESSAGE AND SPEED LOADED FROM THE LINK.',
     unreadable: 'THE LINK WAS UNREADABLE. EMPTY TAPE, SAFE SPEED.',
@@ -355,7 +408,17 @@ export const COPY = deepFreeze({
         'Nothing is recorded. Nothing is sent anywhere.',
         'The camera closes the moment you stop.',
       ],
-      proceed: 'ENABLE CAMERA',
+      proceed: 'ACKNOWLEDGE — ENABLE CAMERA',
+    },
+
+    // The receiver takes the brunt of the flashing, so the same hazard plate
+    // that gates broadcasting also gates listening (it rides this plate).
+    hazard: {
+      title: 'CAUTION — FLASHING LIGHT',
+      imperative: 'DO NOT WATCH IF FLASHING LIGHT HAS EVER TRIGGERED A SEIZURE.',
+      advisory:
+        "Receiving means watching someone else's flashing light. " +
+        'Anyone photosensitive should not watch it or the camera picture.',
     },
 
     // Per-state plate copy — ALL receive states (keys are RECEIVE_STATES).

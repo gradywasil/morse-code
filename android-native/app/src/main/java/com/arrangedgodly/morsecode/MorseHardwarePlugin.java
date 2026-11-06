@@ -8,11 +8,21 @@ import android.graphics.Rect;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.content.Context;
+import android.media.AudioAttributes;
+import android.util.Log;
+import android.os.Build;
 import android.os.Handler;
+import android.os.VibrationAttributes;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.os.VibratorManager;
 import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.util.Range;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import androidx.camera.camera2.interop.Camera2CameraInfo;
 import androidx.camera.camera2.interop.Camera2Interop;
@@ -26,6 +36,8 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import com.getcapacitor.JSArray;
@@ -65,6 +77,7 @@ public class MorseHardwarePlugin extends Plugin {
     private ProcessCameraProvider provider;
     private ImageAnalysis analysis;
     private PreviewView preview;
+    private boolean previewHidden = false;
     private FrameLayout container;
     private long presented;
     private LiveData<CameraState> cameraState;
@@ -253,6 +266,56 @@ public class MorseHardwarePlugin extends Plugin {
     @PluginMethod
     public void startReceiver(PluginCall call) { withPermission(call); }
 
+    /**
+     * One haptic pulse per Morse mark; ms <= 0 cancels any pulse in progress.
+     * The pulse is tagged as accessibility feedback: it carries the message to
+     * someone who is not looking at the light, and an untagged ("unknown")
+     * vibration is the kind Android is quickest to silence.
+     */
+    @PluginMethod
+    public void vibrate(PluginCall call) {
+        try {
+            int ms = Math.min(call.getInt("ms", 0), 2000);
+            Vibrator vibrator = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                ? getContext().getSystemService(VibratorManager.class).getDefaultVibrator()
+                : (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+            if (vibrator == null || !vibrator.hasVibrator()) {
+                Log.w("MorseHaptics", "no vibrator available");
+                call.resolve();
+                return;
+            }
+            if (ms <= 0) {
+                vibrator.cancel();
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE),
+                    VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ACCESSIBILITY));
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE),
+                    new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+            } else {
+                vibrator.vibrate(ms);
+            }
+            call.resolve();
+        } catch (Exception error) {
+            Log.w("MorseHaptics", "vibrate failed", error);
+            call.reject(String.valueOf(error.getMessage()));
+        }
+    }
+
+    /** Keeps the display on (no auto-lock) while a message is being sent or received. */
+    @PluginMethod
+    public void keepScreenOn(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+        getActivity().runOnUiThread(() -> {
+            Window window = getActivity().getWindow();
+            if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        });
+        call.resolve();
+    }
+
     @PluginMethod
     public void openSettings(PluginCall call) {
         getActivity().startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -378,6 +441,31 @@ public class MorseHardwarePlugin extends Plugin {
         box.leftMargin = web[0] - parent[0] + (int) Math.round(call.getDouble("left", 0.0) * scale);
         box.topMargin = web[1] - parent[1] + (int) Math.round(call.getDouble("top", 0.0) * scale);
         preview.setLayoutParams(box);
+        preview.setVisibility(previewHidden ? View.INVISIBLE : View.VISIBLE);
+    }
+
+    /** The camera preview is a native view above the web page, so a web dialog
+     *  cannot cover it. The app hides it while any dialog is open. */
+    @PluginMethod
+    public void setPreviewHidden(PluginCall call) {
+        previewHidden = Boolean.TRUE.equals(call.getBoolean("hidden", false));
+        getActivity().runOnUiThread(() -> {
+            if (preview != null) preview.setVisibility(previewHidden ? View.INVISIBLE : View.VISIBLE);
+            call.resolve();
+        });
+    }
+
+    /** Dark icons for light themes, light icons for dark themes. */
+    @PluginMethod
+    public void setSystemBars(PluginCall call) {
+        boolean light = Boolean.TRUE.equals(call.getBoolean("light", false));
+        getActivity().runOnUiThread(() -> {
+            Window window = getActivity().getWindow();
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
+            controller.setAppearanceLightStatusBars(light);
+            controller.setAppearanceLightNavigationBars(light);
+            call.resolve();
+        });
     }
 
     @PluginMethod

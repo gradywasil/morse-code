@@ -7,13 +7,15 @@
     "test": "node --test \"test/*.test.mjs\"",
     "build:native": "node scripts/prepare-native.mjs",
     "android:sync": "npm run build:native && cap sync android",
-    "android:sync:release": "node scripts/prepare-native.mjs --release && cap sync android"
+    "android:sync:release": "node scripts/prepare-native.mjs --release && cap sync android",
+    "ios:sync": "node scripts/prepare-native.mjs --ios && cap sync ios"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.3"
   },
   "dependencies": {
     "@capacitor/android": "8.5.3",
-    "@capacitor/core": "8.5.3"
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3"
   }
 }

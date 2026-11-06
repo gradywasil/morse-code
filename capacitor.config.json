@@ -8,5 +8,9 @@
   },
   "server": {
     "appStartPath": "/index.html"
+  },
+  "ios": {
+    "backgroundColor": "#171008",
+    "contentInset": "never"
   }
 }

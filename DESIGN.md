@@ -338,3 +338,54 @@ long input, empty input, keyboard height, live decoding, copying, and scroll
 review. Final phone, landscape, and desktop captures were directly inspected.
 The layout detector's inherited zero-padding findings describe flat bays and
 the edge-to-edge paper band; actual text controls retain internal padding.
+
+### Screen stage, finish, and tactile update, 2026-10-31
+
+This update covers what a sender sees when the screen itself is the light,
+and how a run ends. The torch and receive journeys keep their earlier
+composition.
+
+- **Screen stage.** While the screen-flash overlay is mounted, a dark strip
+  (`.screen-stage`, ground-deep, hairline-strong top rule) sits one layer
+  above it at the bottom of the viewport. The rest of the screen remains the
+  light. The strip shows a state legend (GET READY / SENDING BY SCREEN /
+  PAUSED / SENT), the mono mark count, a 2px amber progress rule along its top
+  edge, the message as a mono ticker centered on the letter being spoken
+  (spoken lamp-dim, live lamp, unspoken cream), the current letter's marks as
+  amber pills, and STOP with PAUSE or RESUME. The strip stays dark through
+  every flash, so it reduces the flashing area. After the last mark, the strip
+  reads SENT, says the receiver is finishing, and lights the whole message
+  amber while the screen holds dark. The keys hide then, so a completed run
+  cannot be recorded as stopped. On screens at most 520px high, the keys move
+  beside the ticker.
+- **The tape follows typing.** Editing feeds the newest punch under the head,
+  so each keypress is visible on a phone. Leaving the composer (preflight,
+  ready) rewinds the strip to its first letter over 480ms on the drive curve.
+- **Finish receipt.** Done prints `SENT · n LETTERS · Ns` (or
+  `STOPPED · MARK n OF m`) above REPLAY and a SHARE key. SHARE uses the
+  platform share sheet when available, otherwise copies the link and confirms
+  on the key itself. The native bundle rewrites every share URL to the public
+  origin.
+- **Vibration.** Where the platform can vibrate, each spoken mark pulses the
+  phone (dot 0.7 units, dash 2.6 units, so marks stay distinct). The pulse
+  cancels on pause, stop, or completion. OPTIONS offers VIBRATION ON/OFF
+  beside SOUND ON/OFF. Both toggles name their current state and carry the
+  amber ring when on. The Android app routes vibration through the
+  MorseHardware plugin (`VIBRATE` permission).
+- **Presence on tall phones.** At most 559px wide and at least 740px high,
+  the band grows to 172px with 19px letters, the composer grows, and the
+  camera preview widens to 108px, so the tape fills spare height instead of
+  leaving empty bands. The per-mark ground echo now also runs on phones while
+  the flashlight speaks.
+- **Short bands.** At most 650px high, a slimmer head cap keeps the letter
+  under the head readable.
+- **Option legends.** Legends inside OPTIONS (SPEED, SOUND, VIBRATION) share
+  the Barlow 600 label voice. Gate keys keep single-line labels and wrap as
+  whole keys.
+
+Verified in headless Chrome at 320x568, 390x844, 844x390, and 1440x900. The
+torch and receive paths ran against a simulated torch-capable camera and a
+simulated flashing feed (live decode reached "HELL" mid-message). The
+screen-only path covered lead, live, pause, resume, stop, tail, and done.
+Vibration calls were recorded at 168ms per dot and 624ms per dash at 5 WPM.
+This is browser-emulated coverage, not physical-device acceptance.

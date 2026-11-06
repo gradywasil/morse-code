@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-02T21:11:36.496291+00:00",
+  "title": "Design System: Morse campaign",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Instrument Ground",
+        "tonalRamp": [
+          "oklch(15% 0.0057 68.23)",
+          "oklch(26% 0.0114 68.23)",
+          "oklch(38% 0.0161 68.23)",
+          "oklch(49% 0.0190 68.23)",
+          "oklch(61% 0.0190 68.23)",
+          "oklch(72% 0.0161 68.23)",
+          "oklch(84% 0.0104 68.23)",
+          "oklch(95% 0.0038 68.23)"
+        ]
+      },
+      "deep": {
+        "role": "neutral",
+        "displayName": "Deep",
+        "tonalRamp": [
+          "oklch(15% 0.0045 71.52)",
+          "oklch(26% 0.0089 71.52)",
+          "oklch(38% 0.0127 71.52)",
+          "oklch(49% 0.0149 71.52)",
+          "oklch(61% 0.0149 71.52)",
+          "oklch(72% 0.0127 71.52)",
+          "oklch(84% 0.0082 71.52)",
+          "oklch(95% 0.0030 71.52)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "oklch(15% 0.0072 66.12)",
+          "oklch(26% 0.0144 66.12)",
+          "oklch(38% 0.0204 66.12)",
+          "oklch(49% 0.0240 66.12)",
+          "oklch(61% 0.0240 66.12)",
+          "oklch(72% 0.0204 66.12)",
+          "oklch(84% 0.0132 66.12)",
+          "oklch(95% 0.0048 66.12)"
+        ]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Cream",
+        "tonalRamp": [
+          "oklch(15% 0.0128 85.96)",
+          "oklch(26% 0.0255 85.96)",
+          "oklch(38% 0.0361 85.96)",
+          "oklch(49% 0.0425 85.96)",
+          "oklch(61% 0.0425 85.96)",
+          "oklch(72% 0.0361 85.96)",
+          "oklch(84% 0.0234 85.96)",
+          "oklch(95% 0.0085 85.96)"
+        ]
+      },
+      "dim": {
+        "role": "neutral",
+        "displayName": "Dim",
+        "tonalRamp": [
+          "oklch(15% 0.0165 84.99)",
+          "oklch(26% 0.0330 84.99)",
+          "oklch(38% 0.0467 84.99)",
+          "oklch(49% 0.0550 84.99)",
+          "oklch(61% 0.0550 84.99)",
+          "oklch(72% 0.0467 84.99)",
+          "oklch(84% 0.0302 84.99)",
+          "oklch(95% 0.0110 84.99)"
+        ]
+      },
+      "lamp": {
+        "role": "primary",
+        "displayName": "Lamp Amber",
+        "tonalRamp": [
+          "oklch(15% 0.0422 70.17)",
+          "oklch(26% 0.0845 70.17)",
+          "oklch(38% 0.1197 70.17)",
+          "oklch(49% 0.1408 70.17)",
+          "oklch(61% 0.1408 70.17)",
+          "oklch(72% 0.1197 70.17)",
+          "oklch(84% 0.0774 70.17)",
+          "oklch(95% 0.0282 70.17)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0177 91.10)",
+          "oklch(26% 0.0354 91.10)",
+          "oklch(38% 0.0502 91.10)",
+          "oklch(49% 0.0590 91.10)",
+          "oklch(61% 0.0590 91.10)",
+          "oklch(72% 0.0502 91.10)",
+          "oklch(84% 0.0325 91.10)",
+          "oklch(95% 0.0118 91.10)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0085 70.66)",
+          "oklch(26% 0.0169 70.66)",
+          "oklch(38% 0.0240 70.66)",
+          "oklch(49% 0.0282 70.66)",
+          "oklch(61% 0.0282 70.66)",
+          "oklch(72% 0.0240 70.66)",
+          "oklch(84% 0.0155 70.66)",
+          "oklch(95% 0.0056 70.66)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Campaign display",
+        "purpose": "Hero and paper-register headline; responsive overrides are recorded in DESIGN.md."
+      }
+    },
+    "shadows": [
+      {
+        "name": "primary-key",
+        "value": "0 4px 18px rgba(188,118,25,.18)",
+        "purpose": "Warm primary action depth."
+      },
+      {
+        "name": "options-panel",
+        "value": "0 18px 40px rgba(0,0,0,.5)",
+        "purpose": "Popover elevation."
+      },
+      {
+        "name": "punch-inset",
+        "value": "inset 0 2px 3px rgba(0,0,0,.4)",
+        "purpose": "Paper punch depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "drive",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Tape and key translation."
+      },
+      {
+        "name": "key-transition",
+        "value": "140ms",
+        "purpose": "Key state change."
+      },
+      {
+        "name": "tape-transition",
+        "value": "190ms",
+        "purpose": "Letter positioning."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "small-phone-max",
+        "value": "359px"
+      },
+      {
+        "name": "tablet-min",
+        "value": "520px"
+      },
+      {
+        "name": "beta-columns-min",
+        "value": "900px"
+      },
+      {
+        "name": "desktop-min",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Secondary key",
+      "kind": "button",
+      "refersTo": "key",
+      "description": "Dark warm action key.",
+      "html": "<button class=\"ds-key\">Play the message</button>",
+      "css": ".ds-key{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:13px 18px;border:1px solid #604526;border-radius:8px;background:linear-gradient(180deg,#302214,#21170e);color:var(--cream,#eee0c2);font:600 13px/1.35 var(--mono,\"Spline Sans Mono\",monospace);text-transform:uppercase;letter-spacing:.035em;text-decoration:none;transition:background-color 140ms,border-color 140ms,transform 140ms cubic-bezier(.16,1,.3,1)}.ds-key:hover{border-color:var(--lamp,#ffb454);background:#3a2817}.ds-key:active:not(:disabled){transform:translateY(2px)}.ds-key:focus-visible{outline:2px solid var(--lamp,#ffb454);outline-offset:4px}.ds-key:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-key{transition:none}.ds-key:active:not(:disabled){transform:none}}"
+    },
+    {
+      "name": "Primary key",
+      "kind": "button",
+      "refersTo": "key-primary",
+      "description": "Amber action key.",
+      "html": "<button class=\"ds-key ds-primary\">Send a signal</button>",
+      "css": ".ds-key{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:13px 18px;border:1px solid #604526;border-radius:8px;background:linear-gradient(180deg,#302214,#21170e);color:var(--cream,#eee0c2);font:600 13px/1.35 var(--mono,\"Spline Sans Mono\",monospace);text-transform:uppercase;letter-spacing:.035em;text-decoration:none;transition:background-color 140ms,border-color 140ms,transform 140ms cubic-bezier(.16,1,.3,1)}.ds-key:hover{border-color:var(--lamp,#ffb454);background:#3a2817}.ds-key:active:not(:disabled){transform:translateY(2px)}.ds-key:focus-visible{outline:2px solid var(--lamp,#ffb454);outline-offset:4px}.ds-key:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-key{transition:none}.ds-key:active:not(:disabled){transform:none}}.ds-primary{color:#241407;border-color:#d28c33;background:linear-gradient(180deg,#ffc879,#f2a23c);box-shadow:0 4px 18px rgba(188,118,25,.18)}.ds-primary:hover{background:#ffd08a;border-color:#ffd08a}"
+    },
+    {
+      "name": "Message field",
+      "kind": "input",
+      "refersTo": "message-field",
+      "description": "Inset message slot with counted mono label.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">YOUR MESSAGE <span>11 / 24</span></span><input aria-label=\"Your message\" value=\"HELLO THERE\" maxlength=\"24\"></label>",
+      "css": ".ds-field{display:grid;gap:4px;padding:9px 48px 10px 14px;min-height:70px;border:1px solid #9b7038;border-radius:8px;background:var(--deep,#0f0a05)}.ds-field:focus-within{border-color:var(--lamp,#ffb454)}.ds-label{display:flex;justify-content:space-between;gap:10px;font:400 11px/1.4 var(--mono,\"Spline Sans Mono\",monospace);color:var(--lamp,#ffb454);letter-spacing:.05em}.ds-label>span{color:var(--dim,#b3a17c)}.ds-field input{width:100%;min-width:0;min-height:44px;padding:0;border:0;background:transparent;color:var(--cream,#eee0c2);font:400 22px/1.3 var(--mono,\"Spline Sans Mono\",monospace);text-transform:uppercase;caret-color:var(--lamp,#ffb454)}.ds-field input:focus-visible{outline:0}"
+    },
+    {
+      "name": "Campaign navigation",
+      "kind": "nav",
+      "description": "Warm ruled navigation with measured targets.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Campaign\"><a href=\"#demo\">Try a message</a><a class=\"ds-key\" href=\"#join\">Join the Android test</a></nav>",
+      "css": ".ds-key{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:13px 18px;border:1px solid #604526;border-radius:8px;background:linear-gradient(180deg,#302214,#21170e);color:var(--cream,#eee0c2);font:600 13px/1.35 var(--mono,\"Spline Sans Mono\",monospace);text-transform:uppercase;letter-spacing:.035em;text-decoration:none;transition:background-color 140ms,border-color 140ms,transform 140ms cubic-bezier(.16,1,.3,1)}.ds-key:hover{border-color:var(--lamp,#ffb454);background:#3a2817}.ds-key:active:not(:disabled){transform:translateY(2px)}.ds-key:focus-visible{outline:2px solid var(--lamp,#ffb454);outline-offset:4px}.ds-key:disabled{opacity:.5;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-key{transition:none}.ds-key:active:not(:disabled){transform:none}}.ds-nav{display:flex;flex-wrap:wrap;align-items:center;gap:16px;border-bottom:1px solid var(--line,rgba(240,214,166,.2));background:var(--ground,#140d06);color:var(--cream,#eee0c2)}.ds-nav>a:not(.ds-key){display:inline-flex;align-items:center;min-height:44px;color:inherit;font:600 16px/1.55 Barlow,system-ui,sans-serif;text-decoration:none}.ds-nav>a:focus-visible{outline:2px solid var(--lamp,#ffb454);outline-offset:4px}"
+    },
+    {
+      "name": "Output selector",
+      "kind": "button",
+      "description": "Grouped mono output choices with a selected bottom rule.",
+      "html": "<div class=\"ds-choices\" role=\"group\" aria-label=\"Explore an output\"><button class=\"ds-choice\" aria-pressed=\"true\">Flashlight</button><button class=\"ds-choice\" aria-pressed=\"false\">Screen</button></div>",
+      "css": ".ds-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line,rgba(240,214,166,.2));border-radius:8px;overflow:hidden}.ds-choice{min-height:56px;padding:10px 8px;border:0;background:transparent;color:var(--dim,#b3a17c);font:600 12px/1.3 var(--mono,\"Spline Sans Mono\",monospace)}.ds-choice[aria-pressed=true]{background:#352514;color:var(--lamp,#ffb454);box-shadow:inset 0 -2px var(--lamp,#ffb454)}.ds-choice:hover{color:var(--cream,#eee0c2);background:#2a1e12}.ds-choice:focus-visible{outline:2px solid var(--lamp,#ffb454);outline-offset:-3px}"
+    },
+    {
+      "name": "Paper register",
+      "kind": "custom",
+      "refersTo": "paper-register",
+      "description": "Printed mono letters and inset dot/dash punches on paper. Preview omits the external paper texture.",
+      "html": "<div class=\"ds-paper\"><span class=\"ds-letter\">A<span class=\"ds-punches\"><i></i><i class=\"ds-dash\"></i></span></span></div>",
+      "css": ".ds-paper{padding:34px 20px 18px;background:var(--paper,#e2d3a8);color:var(--ink,#2b2013);border-block:2px solid #bda77d}.ds-letter{display:inline-grid;gap:17px;justify-items:center;font:600 17px/1 var(--mono,\"Spline Sans Mono\",monospace)}.ds-punches{display:flex;gap:8px;align-items:center;height:14px}.ds-punches i{display:block;width:14px;height:14px;border-radius:7px;background:var(--ink,#2b2013);box-shadow:inset 0 2px 3px rgba(0,0,0,.4)}.ds-punches .ds-dash{width:42px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Register",
+    "overview": "This campaign extends the app's punched-paper telegraph instrument. Warm dark ground supports cream text, amber keys and a moving paper register. Barlow explains the demonstration; mono carries the message, controls and measured status.\n\nThis file describes the campaign only. The app's design system remains authoritative for the instrument itself. The campaign adds larger stencil headings, a darker ground and a scrolling page with spacious sections.",
+    "keyCharacteristics": [
+      "Warm instrument ground and cream paper.",
+      "Amber actions and signal states.",
+      "Local stencil, Barlow and mono fonts.",
+      "Punched tape moving beneath a fixed read head."
+    ],
+    "rules": [
+      {
+        "name": "The Warm Ground Rule",
+        "body": "Keep supporting text and surface rules within the warm paper-and-ink family used by the campaign.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measured Text Rule",
+        "body": "Keep editable messages, counts, tape letters and receipt output in mono; use Barlow for explanatory copy.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "**Do** use the campaign's final ground token and locally served fonts.",
+      "**Do** keep the message, tape and receipt in the same mono voice.",
+      "**Do** preserve the stacked mobile layout and the reduced-motion treatments."
+    ],
+    "donts": [
+      "**Don't** transfer the campaign's large display scale into the compact app toolbar.",
+      "**Don't** replace the paper register with a generic rounded card."
+    ]
+  }
+}

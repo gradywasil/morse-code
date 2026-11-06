@@ -211,7 +211,7 @@ describe('F4 · module surface & policy exports', () => {
     // standby = display:none (no box at all → zero layout impact)
     assert.match(css, /display:\s*none/);
     // states: pure white / pure black
-    assert.match(css, /background:\s*#fff/);
+    assert.match(css, /background:\s*var\(--mcb-flash-color,\s*#fff\)/);
     assert.match(css, /background:\s*#000/);
     assert.ok(css.includes(`.${SCREEN_CLASSES.lit}`) && css.includes(`.${SCREEN_CLASSES.dark}`));
     // no fading: transitions/animations would blur mark boundaries and
@@ -525,7 +525,7 @@ describe('F4 · documented stances', () => {
     await fire(channel, raf, 'on');
     const el = overlaysInDom(doc)[0];
     assert.ok(el.classList.contains(SCREEN_CLASSES.lit)); // undimmed
-    assert.match(cssRules(doc), /background:\s*#fff/); // pure white
+    assert.match(cssRules(doc), /background:\s*var\(--mcb-flash-color,\s*#fff\)/); // white unless the sender chose a colour
     assert.doesNotMatch(cssRules(doc), /@media/); // and no reduced-motion carve-out in the rules
   });
 

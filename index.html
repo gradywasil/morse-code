@@ -34,6 +34,9 @@
       <p class="mode-hint">One register, two directions. Speak, or listen.</p>
     </fieldset>
   </section>
+  <button class="key menu-key" id="menu-open" type="button" aria-haspopup="dialog" aria-controls="menu-panel" aria-label="App settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path d="M4 7h9M19 7h1M4 12h3M13 12h7M4 17h9M19 17h1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="12" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="17" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+  </button>
   </header>
 
   <!-- Run 2 — the mode lever: one register, two directions -->
@@ -208,7 +211,11 @@
 
     <!-- Transport keys -->
     <div class="control-deck">
-    <button class="key options-trigger" id="options-trigger" type="button" aria-haspopup="dialog" aria-controls="options-panel"><span>OPTIONS</span><span id="options-speed">5 WPM</span></button>
+    <nav class="dock" aria-label="Tools">
+      <button class="key dock-key" id="translator-open" type="button" aria-haspopup="dialog" aria-controls="translator-panel"><span class="dock-glyph" aria-hidden="true"><i></i><b></b><i></i></span><span class="dock-name">TRANSLATE</span></button>
+      <button class="key dock-key options-trigger" id="options-trigger" type="button" aria-haspopup="dialog" aria-controls="options-panel"><span class="dock-name">SENDING</span><span class="dock-meta" id="options-speed">5 WPM</span></button>
+      <button class="key dock-key" id="log-open" type="button" aria-haspopup="dialog" aria-controls="log-panel"><span class="dock-name">LOG</span><span class="dock-meta" data-log-count></span></button>
+    </nav>
     <section class="bay" id="transport">
       <div class="keys keys-cold">
         <button class="key key-primary key-broadcast" type="button" data-action="broadcast">BROADCAST</button>
@@ -230,10 +237,13 @@
         <button class="key key-primary" type="button" data-action="resume">RESUME</button>
         <button class="key key-stop" type="button" data-action="stop">STOP</button>
       </div>
+      <p class="done-receipt" aria-live="off"><span class="receipt-legend">SENT</span> <span class="receipt-detail"></span></p>
       <div class="keys keys-done">
         <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
+        <button class="key" type="button" data-action="copy-morse">COPY MORSE</button>
+        <button class="key key-share web-only" type="button" data-action="share">SHARE</button>
       </div>
-      <p class="done-offer">REPLAY IT, OR SHARE THE LINK.</p>
+      <p class="done-offer">REPLAY IT, OR COPY IT AS MORSE.</p>
       <div class="keys keys-error">
         <button class="key key-primary" type="button" data-action="replay">REPLAY</button>
         <button class="key" type="button" data-action="reset">RESET</button>
@@ -250,7 +260,6 @@
         <button class="key key-primary" type="button" data-action="listen-again">LISTEN AGAIN</button>
       </div>
     </section>
-    <a class="privacy-link" href="privacy">Privacy policy</a>
     </div>
 
     <!-- Named speed steps -->
@@ -259,8 +268,27 @@
 
   </main>
 
+  <!-- The screen stage: while the screen itself is the light, this strip
+       stays dark above the flash so the sender keeps the tape, the count,
+       and STOP in view. Shown only while the flash overlay is up. -->
+  <div class="screen-stage" role="group" aria-label="Screen broadcast" data-phase="lead">
+    <div class="stage-head">
+      <span class="stage-lamp" aria-hidden="true"></span>
+      <p class="stage-legend">GET READY</p>
+      <p class="stage-progress" aria-live="off"></p>
+    </div>
+    <p class="stage-line">FACE THE SCREEN TOWARD THE RECEIVER.</p>
+    <div class="stage-ticker" aria-hidden="true"><ol class="stage-letters"></ol><span class="stage-caret"></span></div>
+    <div class="stage-marks" aria-hidden="true"></div>
+    <div class="stage-keys">
+      <button class="key key-stop" type="button" data-action="stop">STOP</button>
+      <button class="key stage-pause" type="button" data-action="pause">PAUSE</button>
+      <button class="key key-primary stage-resume" type="button" data-action="resume">RESUME</button>
+    </div>
+  </div>
+
   <dialog id="options-panel" aria-labelledby="options-title">
-    <div class="dialog-head"><h2 id="options-title">OPTIONS</h2><button class="key" id="options-close" type="button">DONE</button></div>
+    <div class="dialog-head"><h2 id="options-title">SENDING</h2><button class="key" id="options-close" type="button">DONE</button></div>
     <section class="bay" id="speed">
       <fieldset class="steps-field">
         <legend class="legend">SPEED</legend>
@@ -285,8 +313,12 @@
         <p class="speed-cap">CEILING 12 WPM. NO FASTER STEP EXISTS.</p>
       </fieldset>
     </section>
-    <section class="audio-option" aria-label="Sound"><span class="legend">SOUND</span><button class="key" type="button" data-action="tone">TONE</button></section>
-    <section class="bay" id="share" aria-label="SHARE">
+    <div class="field-row" id="flash-color">
+      <span class="legend" id="flash-color-label">SCREEN LIGHT</span>
+      <div class="dd" data-dropdown="flash-color" data-labelledby="flash-color-label"></div>
+    </div>
+    <p class="field-note">The screen light only. The flashlight is always white.</p>
+    <section class="bay web-only" id="share" aria-label="SHARE">
       <div class="share-row">
         <button class="key" type="button" data-action="copy-link">COPY LINK</button>
         <p class="share-carries">The link holds the message and its speed. No server, no record.</p>
@@ -294,6 +326,57 @@
       <p class="share-outcome" data-outcome="copied" hidden>LINK COPIED TO THE CLIPBOARD</p>
       <p class="share-outcome" data-outcome="failed" hidden>COPY REFUSED. COPY THE ADDRESS BAR BY HAND.</p>
       <p class="shared-loaded" hidden>MESSAGE AND SPEED LOADED FROM THE LINK.</p>
+    </section>
+  </dialog>
+
+  <dialog id="menu-panel" aria-labelledby="menu-title">
+    <div class="dialog-head"><h2 id="menu-title">SETTINGS</h2><button class="key" id="menu-close" type="button">DONE</button></div>
+    <fieldset class="menu-group" aria-label="Appearance">
+      <legend class="legend">MODE</legend>
+      <div class="seg" role="radiogroup" aria-label="Mode" data-segmented="mode"></div>
+      <div class="field-row">
+        <span class="legend" id="accent-label">ACCENT</span>
+        <div class="dd" data-dropdown="accent" data-labelledby="accent-label"></div>
+      </div>
+    </fieldset>
+    <div class="toggle-grid">
+      <div class="toggle-cell"><span class="legend">SOUND</span><button class="key toggle-key" type="button" data-action="tone" aria-pressed="true">ON</button></div>
+      <div class="toggle-cell haptic-option" hidden><span class="legend">VIBRATION</span><button class="key toggle-key" type="button" data-action="haptics" aria-pressed="true">ON</button></div>
+      <div class="toggle-cell"><span class="legend">KEEP SCREEN ON</span><button class="key toggle-key" type="button" data-action="keep-awake" aria-pressed="true">ON</button></div>
+      <div class="toggle-cell native-only"><span class="legend">FLASH WARNING</span><button class="key toggle-key" type="button" data-show-flash-warning>SHOW AGAIN</button></div>
+    </div>
+    <nav class="about-links" aria-label="About Morse">
+      <a class="key" href="privacy">PRIVACY</a>
+      <a class="key" href="https://discord.gg/NvyRQcYPrz" target="_blank" rel="noopener noreferrer">DISCORD</a>
+      <!--native-diagnostics-->
+    </nav>
+  </dialog>
+
+  <dialog id="log-panel" aria-labelledby="log-title">
+    <div class="dialog-head"><h2 id="log-title">RECEIVED LOG</h2><button class="key" id="log-close" type="button">DONE</button></div>
+    <p class="log-empty" data-log-empty>NOTHING RECEIVED YET. EACH MESSAGE YOU RECEIVE IS FILED HERE.</p>
+    <ol class="log-list" data-log-list></ol>
+    <div class="log-foot">
+      <p class="log-note" data-log-note></p>
+      <button class="key" type="button" data-log-clear>CLEAR LOG</button>
+    </div>
+  </dialog>
+
+  <dialog id="translator-panel" aria-labelledby="translator-title">
+    <div class="dialog-head"><h2 id="translator-title">MORSE TRANSLATOR</h2><button class="key" id="translator-close" type="button">DONE</button></div>
+    <section class="tr-field" aria-label="Text">
+      <div class="tr-head"><label class="legend" for="tr-text">TEXT</label><button class="key" type="button" data-action="copy-tr-text">COPY</button></div>
+      <textarea id="tr-text" class="tr-input" rows="2" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="TYPE OR PASTE TEXT"></textarea>
+    </section>
+    <section class="tr-field" aria-label="Morse">
+      <div class="tr-head"><label class="legend" for="tr-morse">MORSE</label><button class="key" type="button" data-action="copy-tr-morse">COPY</button></div>
+      <textarea id="tr-morse" class="tr-input tr-mono" rows="3" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder=".... .. / - .... . .-. ."></textarea>
+      <p class="tr-hint">Dots and dashes. A space between letters, a slash between words.</p>
+    </section>
+    <p class="tr-note" data-tr-note></p>
+    <section class="tr-breakdown" aria-label="Letter by letter">
+      <h3 class="legend">LETTER BY LETTER</h3>
+      <ol class="tr-chips" data-tr-chips></ol>
     </section>
   </dialog>
 
@@ -346,8 +429,20 @@
         <button class="key" type="button" data-action="retry-arm">TRY AGAIN</button>
       </div>
     </aside>
-    <aside class="bay gate-plate" id="why-camera-receive" aria-label="CAMERA ACCESS">
-      <h2 class="gate-title">CAMERA ACCESS</h2>
+    <aside class="bay gate-plate" id="why-camera-receive" aria-label="CAUTION — FLASHING LIGHT AND CAMERA ACCESS">
+      <h2 class="gate-title">CAUTION — FLASHING LIGHT</h2>
+      <div class="gate-grid">
+        <svg class="hazard-pict" role="img" aria-label="Warning pictogram: a flashlight emitting rapid flashes." viewBox="0 0 72 72" focusable="false">
+          <path d="M36 7 66 62 H6 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"/>
+          <circle cx="36" cy="42" r="6.5" fill="none" stroke="currentColor" stroke-width="4"/>
+          <path d="M36 31.5v-6M25 36l-5.5-3M47 36l5.5-3M27.5 46.5 23 50M44.5 46.5 49 50" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <div class="gate-copy">
+          <p class="gate-imperative">DO NOT WATCH IF FLASHING LIGHT HAS EVER TRIGGERED A SEIZURE.</p>
+          <p class="gate-advisory">Receiving means watching someone else's flashing light. Anyone photosensitive should not watch it or the camera picture.</p>
+        </div>
+      </div>
+      <h2 class="gate-title gate-subtitle">CAMERA ACCESS</h2>
       <ul class="why-lines">
         <li>Your camera detects the flashing light.</li>
         <li>It watches light levels in a live view.</li>
@@ -355,7 +450,7 @@
         <li>The camera closes the moment you stop.</li>
       </ul>
       <div class="keys">
-        <button class="key key-primary" type="button" data-action="begin-listening">ENABLE CAMERA</button>
+        <button class="key key-primary" type="button" data-action="begin-listening">ACKNOWLEDGE — ENABLE CAMERA</button>
         <button class="key" type="button" data-action="cancel">NOT NOW</button>
       </div>
     </aside>

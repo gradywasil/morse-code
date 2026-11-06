@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171008">
+  <meta name="description" content="A pocket telegraph with a paper-tape soul. Turn words into Morse with your phone's light, sound and vibration. Join the Morse Android beta.">
+  <meta property="og:title" content="Morse. Say it across the dark.">
+  <meta property="og:description" content="Type a few words. Let the light do the talking. Try Morse and join the Android beta.">
+  <title>Morse. Say it across the dark.</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="site.css">
+  <script type="module" src="site.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-10 10M10 5H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-5"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m8 5 7 7-7 7"/></symbol>
+    <symbol id="icon-light" viewBox="0 0 24 24"><path d="m7 3 10 0-2 8v9H9v-9ZM8 7h8M3 3 1 1m20 2 2-2M12 1v-1"/></symbol>
+    <symbol id="icon-screen" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></symbol>
+    <symbol id="icon-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4Zm13-2c3 3 3 7 0 10m3-13c5 5 5 11 0 16"/></symbol>
+    <symbol id="icon-vibration" viewBox="0 0 24 24"><rect x="8" y="4" width="8" height="16" rx="2"/><path d="m4 6-2 3 2 3-2 3 2 3m16-12 2 3-2 3 2 3-2 3"/></symbol>
+  </svg>
+
+  <header class="site-header" id="top">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Morse home"><img src="../favicon.svg" width="36" height="36" alt=""><span>MORSE</span></a>
+      <nav aria-label="Main navigation">
+        <a class="nav-story" href="#how-it-works">See it work</a>
+        <a class="nav-demo" href="#demo">Try a message</a>
+        <a class="key nav-join" href="#get-morse"><span class="desktop-label">Join the Android beta</span><span class="mobile-label">Join the beta</span><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 class="hero-title" id="hero-title"><span>Say it across</span><span>the dark.</span></h1>
+      <div class="hero-scene" aria-label="An illustrated exchange between two phones running Morse">
+        <img class="phone sender-phone" src="assets/sender-360.webp" srcset="assets/sender-360.webp 360w, assets/sender-720.webp 720w" sizes="(max-width: 760px) 42vw, 20vw" width="360" height="702" fetchpriority="high" alt="A phone showing the Morse Broadcast interface, its message field, paper tape and amber Broadcast key.">
+        <img class="beam-ambient" src="assets/signal-light-960.webp" width="960" height="373" alt="" aria-hidden="true">
+        <div class="signal-path" id="signal-path" aria-hidden="true"></div>
+        <img class="phone receiver-phone" src="assets/receiver-360.webp" srcset="assets/receiver-360.webp 360w, assets/receiver-720.webp 720w" sizes="(max-width: 760px) 42vw, 22vw" width="360" height="598" alt="A phone showing the Morse Receive interface with its camera area, transcript and Begin Listening key.">
+        <p class="phone-note sender-note"><strong>SENDER</strong><span>Type a few words.</span></p>
+        <p class="phone-note receiver-note"><strong>RECEIVER</strong><span id="receiver-preview" aria-hidden="true">Read the light.</span></p>
+        <span class="demo-label"><span class="plaque-face"><span class="desktop-label">Interactive demonstration</span><span class="mobile-label">Interactive demo</span></span></span>
+      </div>
+      <div class="hero-copy">
+        <h2><span>Your light sends it.</span> <span>Their camera reads it.</span></h2>
+        <p class="hero-description">Turn a few words into Morse with your phone's flashlight, screen, sound and vibration. Another phone's camera can read the light back into text.</p>
+      </div>
+      <form class="demo-controls" id="demo" aria-label="Try a Morse message">
+        <div class="demo-input-row">
+          <div class="message-field"><label class="field-label" for="demo-message">YOUR MESSAGE <span id="character-count">11 / 24</span></label><input id="demo-message" name="message" value="HELLO THERE" maxlength="24" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-describedby="demo-status demo-error"><button class="clear-message" id="clear-message" type="button" aria-label="Clear your message"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M7 17 17 7"/></svg></button></div>
+          <button class="key key-primary play-key" id="play-signal" type="submit" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg><span>Send a signal</span></button>
+        </div>
+        <div class="demo-meta">
+          <div class="demo-feedback"><p class="demo-status" id="demo-status" role="status">A few words, ready to become light.</p><p class="demo-error" id="demo-error" role="alert" hidden></p></div>
+          <details class="demo-options" id="demo-options"><summary><svg class="icon" aria-hidden="true"><use href="#icon-chevron"/></svg>Options</summary><div class="options-panel"><label for="demo-speed">Speed<select id="demo-speed" disabled><option value="LEARNER">Learner · 5 WPM</option><option value="STANDARD">Standard · 8 WPM</option><option value="BRISK">Brisk · 12 WPM</option></select></label><button class="key sound-toggle" id="sound-toggle" type="button" aria-pressed="false" disabled><svg class="icon" aria-hidden="true"><use href="#icon-sound"/></svg><span>Sound off</span></button><p>The demo stays inside this page. Sound starts only when you choose it.</p></div></details>
+        </div>
+        <noscript><p>The interactive demo needs JavaScript. You can still join the Android beta or open the web app below.</p></noscript>
+      </form>
+      <div class="hero-actions">
+        <div class="join-row"><a class="key key-primary join-key" href="#get-morse">Join the Android beta<svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a><p>Join the group, opt in, <br>then install Morse.</p></div>
+        <a class="web-link" data-open-app href="https://morse.graydonwasil.com/" target="_blank" rel="noopener noreferrer"><svg class="icon" aria-hidden="true"><use href="#icon-external"/></svg>Open the web app</a>
+      </div>
+    </section>
+
+    <section class="paper-register" aria-labelledby="paper-title">
+      <h2 id="paper-title">Light. Sound. <br>A little Morse.</h2>
+      <div class="tape-window" aria-label="Your message punched in Morse code">
+        <div class="tape-track" id="tape-track" aria-hidden="true"><span class="standby-marks">.... . .-.. .-.. --- / - .... . .-. .</span></div>
+        <div class="read-head" aria-hidden="true"><span class="head-cap"></span><span class="head-rail rail-left"></span><span class="head-rail rail-right"></span></div>
+      </div>
+    </section>
+
+    <section class="channels-section section-wrap" id="how-it-works" aria-labelledby="channels-title">
+      <div class="channel-copy"><h2 id="channels-title">Your phone has a<br>second language.</h2><p>Type a message and the paper tape punches itself. Press Broadcast, hold up your phone, and let the light do the talking.</p><p>Morse can send through flashlight, screen, sound and vibration together. Pick an output to explore the pattern here.</p></div>
+      <div class="channel-console">
+        <div class="channel-choices" role="group" aria-label="Explore an output">
+          <button class="channel-choice" type="button" data-channel="flashlight" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#icon-light"/></svg><span>Flashlight</span></button>
+          <button class="channel-choice" type="button" data-channel="screen" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-screen"/></svg><span>Screen</span></button>
+          <button class="channel-choice" type="button" data-channel="sound" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-sound"/></svg><span>Sound</span></button>
+          <button class="channel-choice" type="button" data-channel="vibration" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#icon-vibration"/></svg><span>Vibration</span></button>
+        </div>
+        <div class="channel-panel" id="channel-panel" data-channel="flashlight">
+          <div class="output-instrument" aria-hidden="true"><div class="output-lamp"></div><div class="output-screen"></div><div class="output-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="output-vibration"><svg class="icon" aria-hidden="true"><use href="#icon-vibration"/></svg></div></div>
+          <div class="channel-description"><h3 id="channel-title">Let your flashlight talk.</h3><p id="channel-description">The Android app turns your camera's LED into a Morse lamp. This small light follows the same timing.</p><button class="key replay-key" data-play type="button" disabled><svg class="icon" aria-hidden="true"><use href="#icon-play"/></svg><span>Play the message</span></button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="receive-section section-wrap" id="receive" aria-labelledby="receive-title">
+      <div class="receive-copy"><h2 id="receive-title">The light comes<br>back as words.</h2><p>Open Receive on another phone and aim at the sender's light. Morse finds the pace and builds the message as the flashes arrive.</p><p>You get a readable transcript and a copy button. The camera processes the light on your phone.</p><a class="text-link" data-open-app href="https://morse.graydonwasil.com/" target="_blank" rel="noopener noreferrer">Try the real exchange in the web app<svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></a></div>
+      <figure class="receipt"><figcaption>DEMO RECEIPT <span class="receipt-lamp" aria-hidden="true"></span></figcaption><output id="demo-receipt" aria-live="off">Your words land here.</output><p id="receipt-status">Type a message above and send the signal.</p><div class="receipt-bottom"><span id="receipt-progress">READY TO LISTEN</span><span aria-hidden="true">MORSE</span></div></figure>
+    </section>
+
+    <section class="privacy-note section-wrap" aria-labelledby="privacy-title"><div class="privacy-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></svg></div><div><h2 id="privacy-title">The message stays with you.</h2><p>Your words and camera frames stay on your device. Morse processes the light locally, and closes the camera when you stop. The Android app bundles its interface and fonts, too.</p></div></section>
+
+    <section class="join-section" id="get-morse" aria-labelledby="join-title">
+      <div class="section-wrap join-inner">
+        <img class="join-mark" src="../favicon.svg" width="80" height="80" alt="">
+        <h2 id="join-title">Join the Android beta.</h2>
+        <p>Use the same Google account for the group, beta signup and Play Store.</p>
+        <ol class="beta-steps" role="list">
+          <li><h3>Join the tester group</h3><p>Join Morse Android Testers to get access to the closed test.</p><a class="key" href="https://groups.google.com/g/morse-android-testers" target="_blank" rel="noopener noreferrer">Join the Google Group<svg class="icon" aria-hidden="true"><use href="#icon-external"/></svg></a></li>
+          <li><h3>Join the beta</h3><p>Confirm that you want to be a tester on Google Play's beta signup page.</p><a class="key" href="https://play.google.com/apps/testing/com.arrangedgodly.morsecode" target="_blank" rel="noopener noreferrer">Join the beta on Google Play<svg class="icon" aria-hidden="true"><use href="#icon-external"/></svg></a></li>
+          <li><h3>Install Morse</h3><p>After joining the beta, open the store listing to install Morse on your Android phone.</p><a class="key" href="https://play.google.com/store/apps/details?id=com.arrangedgodly.morsecode" target="_blank" rel="noopener noreferrer">Open the Play Store<svg class="icon" aria-hidden="true"><use href="#icon-external"/></svg></a></li>
+        </ol>
+        <p class="beta-help">If Google Play says the test isn't available, check that you've joined the group and are using the same Google account.</p>
+        <div class="final-actions"><a class="key" href="https://discord.gg/NvyRQcYPrz" target="_blank" rel="noopener noreferrer">Find us on Discord<svg class="icon" aria-hidden="true"><use href="#icon-external"/></svg></a></div>
+        <a class="web-link" data-open-app href="https://morse.graydonwasil.com/" target="_blank" rel="noopener noreferrer">Or try Morse in your browser</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer section-wrap"><a class="brand" href="#top"><img src="../favicon.svg" width="28" height="28" alt=""><span>MORSE</span></a><nav aria-label="Footer navigation"><a href="https://morse.graydonwasil.com/privacy-native" target="_blank" rel="noopener noreferrer">App privacy</a><a href="https://discord.gg/NvyRQcYPrz" target="_blank" rel="noopener noreferrer">Discord</a><a href="#top">Back to top</a></nav></footer>
+</body>
+</html>

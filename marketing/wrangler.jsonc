@@ -1,0 +1,13 @@
+{
+  "name": "morse-marketing",
+  "compatibility_date": "2026-11-02",
+  "assets": {
+    "directory": "./dist"
+  },
+  "routes": [
+    {
+      "pattern": "morse.arrangedgodly.com",
+      "custom_domain": true
+    }
+  ]
+}

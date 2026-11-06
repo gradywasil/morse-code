@@ -1,5 +1,9 @@
 const WARNING_KEY = 'morse.hide-flash-warning.v1';
 
+// One flashing-light warning guards both directions. The receiver looks at the
+// flashing, so it is gated exactly like the sender.
+const WARNING_ACTIONS = ['ack', 'begin-listening'];
+
 export function installNativeOnboarding(hardware, doc = document, storage = localStorage) {
   let warningRead = false;
   let requestedBroadcast = false;
@@ -8,9 +12,11 @@ export function installNativeOnboarding(hardware, doc = document, storage = loca
     try { return storage.getItem(WARNING_KEY) === 'yes'; } catch { return false; }
   };
   doc.addEventListener('click', event => {
-    if (event.target.closest('[data-action="ack"]')) {
+    const accepted = WARNING_ACTIONS.some(name => event.target.closest(`[data-action="${name}"]`));
+    if (accepted) {
       warningRead = true;
-      if (doc.querySelector('#remember-flash-warning')?.checked) {
+      const plate = event.target.closest('aside');
+      if (plate?.querySelector('.native-warning-choice input')?.checked) {
         try { storage.setItem(WARNING_KEY, 'yes'); } catch { /* Keep this launch usable. */ }
       }
     }
@@ -26,9 +32,10 @@ export function installNativeOnboarding(hardware, doc = document, storage = loca
     if (state === 'preflight') requestedBroadcast = true;
     await permissionReady;
     if (doc.body.dataset.state !== state) return;
-    const action = state === 'preflight' && (warningRead || saved()) ? 'ack'
+    const warned = warningRead || saved();
+    const action = state === 'preflight' && warned ? 'ack'
       : state === 'awaiting-permission' ? 'continue-prompt'
-      : state === 'receive-preflight' ? 'begin-listening'
+      : state === 'receive-preflight' && warned ? 'begin-listening'
       : state === 'torch-ready' && requestedBroadcast ? 'broadcast' : null;
     if (action) {
       if (state === 'torch-ready') requestedBroadcast = false;
